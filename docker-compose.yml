@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  nginx-target:
+    image: nginx:alpine
+    container_name: acre-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend/mock_infra/nginx.conf:/etc/nginx/nginx.conf:rw
+      - ./backend/mock_infra/error.log:/var/log/nginx/error.log:rw
+    networks:
+      - acre-network
+
+  dummy-app:
+    image: node:20-alpine
+    container_name: acre-dummy-app
+    command: node -e "require('http').createServer((req,res)=>{res.writeHead(200,{'Content-Type':'text/html'});res.end('<h1>The Restaurant is OPEN! System is Healthy.</h1>');}).listen(5000)"
+    networks:
+      - acre-network
+
+networks:
+  acre-network:
+    driver: bridge
