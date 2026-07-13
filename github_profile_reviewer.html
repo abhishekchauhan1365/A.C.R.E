@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>GitHub Profile Reviewer · @abhishekchauhan1365</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ════════════════════════════════════════
+   RESET & VARIABLES
+════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --app-bg:#010409; --app-border:#21262d; --app-accent:#2f81f7; --app-accent-h:#388bfd;
+  --gh-bg:#0d1117; --gh-card:#161b22; --gh-border:#30363d;
+  --gh-text:#e6edf3; --gh-muted:#7d8590;
+  --gh-blue:#2f81f7; --gh-green:#3fb950; --gh-purple:#bc8cff;
+  --gh-orange:#f78166; --gh-yellow:#e3b341;
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-mono:'Fira Code','Cascadia Code',monospace;
+}
+body{font-family:var(--font-sans);background:var(--app-bg);color:var(--gh-text);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+
+/* ════════════════════════════════════════
+   TOOLBAR
+════════════════════════════════════════ */
+.toolbar{
+  flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:54px;background:var(--app-bg);
+  border-bottom:1px solid var(--app-border);z-index:100;
+}
+.toolbar-left{display:flex;align-items:center;gap:20px;}
+.toolbar-logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;}
+.toolbar-logo svg{fill:var(--gh-text);}
+.toolbar-steps{display:flex;align-items:center;gap:0;}
+.step{display:flex;align-items:center;gap:7px;padding:4px 12px;border-radius:100px;font-size:12px;font-weight:600;color:var(--gh-muted);transition:all .2s;}
+.step.done,.step.active{color:var(--gh-blue);background:rgba(47,129,247,.1);}
+.step-num{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:var(--gh-border);color:var(--gh-muted);}
+.step.done .step-num,.step.active .step-num{background:var(--gh-blue);color:#fff;}
+.step-arr{color:var(--gh-border);margin:0 2px;font-size:11px;}
+.toolbar-right{display:flex;align-items:center;gap:10px;}
+.live-badge{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gh-green);background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.25);padding:4px 11px;border-radius:100px;font-weight:600;}
+.live-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--gh-green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.tbtn{padding:6px 15px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--gh-border);background:transparent;color:var(--gh-text);font-family:var(--font-sans);transition:all .2s;}
+.tbtn:hover{border-color:var(--gh-blue);color:var(--gh-blue);}
+.tbtn-primary{background:var(--app-accent);border-color:var(--app-accent);color:#fff;}
+.tbtn-primary:hover{background:var(--app-accent-h);border-color:var(--app-accent-h);color:#fff;transform:translateY(-1px);box-shadow:0 4px 14px rgba(47,129,247,.3);}
+
+/* ════════════════════════════════════════
+   LAYOUT
+════════════════════════════════════════ */
+.main{flex:1;display:grid;grid-template-columns:370px 1fr;overflow:hidden;}
+
+/* ════════════════════════════════════════
+   EDITOR PANEL
+════════════════════════════════════════ */
+.ed-panel{background:var(--gh-bg);border-right:1px solid var(--app-border);display:flex;flex-direction:column;overflow:hidden;}
+.ed-tabs{display:flex;border-bottom:1px solid var(--gh-border);padding:0 14px;flex-shrink:0;background:#0a0f17;}
+.ed-tab{padding:13px 13px;font-size:13px;font-weight:500;color:var(--gh-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;white-space:nowrap;}
+.ed-tab:hover{color:var(--gh-text);}
+.ed-tab.active{color:var(--gh-text);border-bottom-color:var(--gh-blue);}
+.ed-body{flex:1;overflow-y:auto;padding:18px 16px;scrollbar-width:thin;scrollbar-color:var(--gh-border) transparent;}
+.ed-body::-webkit-scrollbar{width:4px;}
+.ed-body::-webkit-scrollbar-thumb{background:var(--gh-border);border-radius:4px;}
+.ed-sec{display:none;}
+.ed-sec.active{display:block;animation:fadein .25s ease;}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Form */
+.fg{margin-bottom:16px;}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--gh-muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;}
+.fi,.fta{width:100%;background:#010409;border:1px solid var(--gh-border);border-radius:8px;padding:8px 11px;font-size:13px;color:var(--gh-text);font-family:var(--font-sans);outline:none;transition:border-color .2s;}
+.fi:focus,.fta:focus{border-color:var(--gh-blue);box-shadow:0 0 0 3px rgba(47,129,247,.1);}
+.fta{resize:vertical;min-height:60px;line-height:1.5;}
+.fhint{font-size:11px;color:var(--gh-muted);margin-top:4px;}
+.ed-divider{border:none;border-top:1px solid var(--gh-border);margin:16px 0;}
+.ed-sub{font-size:11px;font-weight:700;color:var(--gh-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.ed-sub::after{content:'';flex:1;height:1px;background:var(--gh-border);}
+
+/* Skill chips */
+.chip-grid{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px;}
+.chip{padding:4px 11px;border-radius:100px;font-size:12px;font-weight:600;border:1px solid var(--gh-border);color:var(--gh-muted);cursor:pointer;transition:all .15s;user-select:none;}
+.chip:hover{border-color:var(--gh-blue);color:var(--gh-blue);}
+.chip.on{background:rgba(47,129,247,.1);border-color:rgba(47,129,247,.35);color:#79b8ff;}
+
+/* Toggle */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(48,54,61,.4);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-lbl{font-size:13px;font-weight:500;}
+.toggle-sub{font-size:11px;color:var(--gh-muted);margin-top:2px;}
+.toggle{position:relative;width:38px;height:21px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.tslider{position:absolute;cursor:pointer;inset:0;background:var(--gh-border);border-radius:100px;transition:.3s;}
+.tslider::before{content:'';position:absolute;height:15px;width:15px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}
+.toggle input:checked+.tslider{background:var(--gh-blue);}
+.toggle input:checked+.tslider::before{transform:translateX(17px);}
+
+/* Pill inputs */
+.pill-wrap{display:flex;flex-wrap:wrap;gap:5px;padding:7px;background:#010409;border:1px solid var(--gh-border);border-radius:8px;min-height:40px;align-items:center;cursor:text;}
+.pill-wrap:focus-within{border-color:var(--gh-blue);}
+.pill{display:flex;align-items:center;gap:4px;background:rgba(188,140,255,.1);border:1px solid rgba(188,140,255,.28);color:var(--gh-purple);padding:3px 9px;border-radius:100px;font-size:12px;font-weight:500;}
+.pill-x{cursor:pointer;font-size:14px;opacity:.6;line-height:1;}
+.pill-x:hover{opacity:1;}
+.pill-input{background:transparent;border:none;outline:none;font-size:12px;color:var(--gh-text);font-family:var(--font-sans);min-width:80px;}
+
+/* Repo cards in editor */
+.repo-card-ed{background:#010409;border:1px solid var(--gh-border);border-radius:10px;padding:13px;margin-bottom:10px;}
+.repo-card-ed-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.repo-card-ed-title{font-size:12px;font-weight:700;color:var(--gh-blue);}
+.repo-rm{cursor:pointer;color:var(--gh-muted);font-size:18px;line-height:1;transition:color .2s;}
+.repo-rm:hover{color:var(--gh-orange);}
+.repo-row{display:grid;grid-template-columns:1fr 80px;gap:7px;}
+.sel{width:100%;background:#0a0f17;border:1px solid var(--gh-border);border-radius:6px;padding:7px 9px;font-size:12px;color:var(--gh-text);font-family:var(--font-sans);outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%237d8590' d='M5 7L0 2h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;}
+.sel:focus{border-color:var(--gh-blue);}
+.add-repo-btn{width:100%;padding:9px;background:transparent;border:1px dashed var(--gh-border);border-radius:9px;color:var(--gh-muted);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-sans);transition:all .2s;}
+.add-repo-btn:hover{border-color:var(--gh-blue);color:var(--gh-blue);background:rgba(47,129,247,.05);}
+
+/* ════════════════════════════════════════
+   PREVIEW PANEL
+════════════════════════════════════════ */
+.prev-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--gh-bg);}
+.prev-tabs{display:flex;align-items:center;border-bottom:1px solid var(--gh-border);padding:0 20px;background:#0a0f17;flex-shrink:0;}
+.prev-tab{padding:13px 15px;font-size:13px;font-weight:500;color:var(--gh-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;display:flex;align-items:center;gap:7px;}
+.prev-tab:hover{color:var(--gh-text);}
+.prev-tab.active{color:var(--gh-text);border-bottom-color:var(--gh-orange);}
+.tab-pip{width:6px;height:6px;border-radius:50%;background:var(--gh-border);}
+.prev-tab.active .tab-pip{background:var(--gh-orange);}
+.prev-view{flex:1;overflow-y:auto;display:none;scrollbar-width:thin;scrollbar-color:var(--gh-border) transparent;}
+.prev-view::-webkit-scrollbar{width:5px;}
+.prev-view::-webkit-scrollbar-thumb{background:var(--gh-border);border-radius:4px;}
+.prev-view.active{display:block;}
+
+/* ════════════════════════════════════════
+   GITHUB UI CLONE
+════════════════════════════════════════ */
+.gh-nav{
+  background:#161b22;border-bottom:1px solid var(--gh-border);
+  padding:12px 24px;display:flex;align-items:center;gap:14px;
+  position:sticky;top:0;z-index:10;
+}
+.gh-nav-search{
+  flex:1;max-width:260px;background:var(--gh-bg);border:1px solid var(--gh-border);
+  border-radius:7px;padding:5px 11px;font-size:13px;color:var(--gh-muted);
+  display:flex;align-items:center;gap:7px;
+}
+.gh-nav-links{display:flex;align-items:center;gap:18px;margin-left:6px;}
+.gh-nav-link{font-size:13px;font-weight:600;color:var(--gh-text);opacity:.75;cursor:pointer;}
+.gh-nav-link:hover{opacity:1;}
+.gh-nav-r{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.gh-icon-btn{width:30px;height:30px;border-radius:50%;background:transparent;border:1px solid var(--gh-border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;}
+.gh-av-sm{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#2f81f7,#bc8cff);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;cursor:pointer;border:2px solid var(--gh-border);}
+
+.gh-body{max-width:1280px;margin:0 auto;padding:24px;display:grid;grid-template-columns:296px 1fr;gap:24px;}
+@media(max-width:900px){.gh-body{grid-template-columns:1fr;}}
+
+/* Sidebar */
+.gh-avatar-lg{
+  width:100%;max-width:270px;aspect-ratio:1;border-radius:50%;
+  background:linear-gradient(135deg,#2f81f7 0%,#bc8cff 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:78px;font-weight:800;color:#fff;margin-bottom:16px;
+  border:2px solid var(--gh-border);box-shadow:0 0 0 4px rgba(47,129,247,.12);
+}
+.gh-name{font-size:24px;font-weight:600;line-height:1.25;margin-bottom:3px;}
+.gh-handle{font-size:18px;font-weight:300;color:var(--gh-muted);margin-bottom:12px;}
+.gh-bio{font-size:14px;line-height:1.5;margin-bottom:14px;}
+.gh-follow-btn{width:100%;padding:7px;background:var(--gh-card);border:1px solid var(--gh-border);border-radius:7px;color:var(--gh-text);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-sans);transition:background .2s;margin-bottom:10px;}
+.gh-follow-btn:hover{background:#30363d;}
+.gh-sponsor-btn{width:100%;padding:6px;background:transparent;border:1px solid var(--gh-border);border-radius:7px;color:#db61a2;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-sans);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:5px;}
+.gh-meta{margin-bottom:14px;}
+.gh-meta-item{display:flex;align-items:center;gap:7px;font-size:14px;color:var(--gh-muted);padding:3px 0;}
+.gh-meta-item a{color:var(--gh-blue);text-decoration:none;}
+.gh-meta-item a:hover{text-decoration:underline;}
+.gh-stats-row{display:flex;flex-wrap:wrap;gap:14px;font-size:14px;margin-bottom:14px;}
+.gh-stat-l{display:flex;align-items:center;gap:4px;color:var(--gh-text);cursor:pointer;}
+.gh-stat-l:hover{color:var(--gh-blue);}
+.gh-stat-n{font-weight:600;}
+.gh-stat-s{color:var(--gh-muted);}
+.gh-ach{margin-bottom:14px;}
+.gh-ach-title{font-size:14px;font-weight:600;margin-bottom:7px;}
+.gh-ach-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.gh-ach-chip{padding:2px 9px;background:rgba(47,129,247,.08);border:1px solid rgba(47,129,247,.22);border-radius:100px;font-size:12px;color:#79b8ff;}
+
+/* Main */
+.gh-prof-nav{display:flex;border-bottom:1px solid var(--gh-border);margin-bottom:22px;overflow-x:auto;}
+.gh-prof-nav-item{padding:9px 15px;font-size:14px;font-weight:500;color:var(--gh-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+.gh-prof-nav-item:hover{color:var(--gh-text);}
+.gh-prof-nav-item.active{color:var(--gh-text);border-bottom-color:var(--gh-orange);font-weight:600;}
+.gh-nav-badge{background:var(--gh-border);color:var(--gh-muted);border-radius:100px;padding:1px 6px;font-size:11px;font-weight:600;}
+
+.gh-sec-title{font-size:14px;font-weight:600;margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;}
+.gh-sec-title a{font-size:12px;color:var(--gh-blue);text-decoration:none;font-weight:500;}
+
+/* Pinned repos grid */
+.gh-pinned-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:22px;}
+@media(max-width:700px){.gh-pinned-grid{grid-template-columns:1fr;}}
+.gh-repo-card{background:var(--gh-card);border:1px solid var(--gh-border);border-radius:8px;padding:15px;display:flex;flex-direction:column;gap:7px;transition:border-color .2s;}
+.gh-repo-card:hover{border-color:var(--gh-blue);}
+.gh-repo-hdr{display:flex;align-items:center;gap:7px;}
+.gh-repo-name{font-size:14px;font-weight:600;color:var(--gh-blue);text-decoration:none;}
+.gh-repo-name:hover{text-decoration:underline;}
+.gh-repo-vis{font-size:11px;font-weight:600;color:var(--gh-muted);border:1px solid var(--gh-border);border-radius:100px;padding:1px 6px;}
+.gh-repo-desc{font-size:12px;color:var(--gh-muted);line-height:1.5;flex:1;}
+.gh-repo-meta{display:flex;align-items:center;gap:11px;font-size:12px;color:var(--gh-muted);}
+.lang-dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+
+/* Contribution graph */
+.gh-contrib-sec{margin-bottom:22px;}
+.gh-contrib-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;font-size:14px;}
+.gh-contrib-ct{font-weight:600;}
+.gh-contrib-box{background:var(--gh-card);border:1px solid var(--gh-border);border-radius:8px;padding:15px;}
+.gh-contrib-grid{display:grid;grid-template-columns:repeat(53,1fr);gap:2px;}
+.gh-cell{width:100%;aspect-ratio:1;border-radius:2px;background:#161b22;border:1px solid rgba(27,31,35,.06);cursor:pointer;transition:outline .1s;}
+.gh-cell:hover{outline:1px solid var(--gh-text);outline-offset:1px;}
+.gh-cell[data-l="1"]{background:#0e4429;}
+.gh-cell[data-l="2"]{background:#006d32;}
+.gh-cell[data-l="3"]{background:#26a641;}
+.gh-cell[data-l="4"]{background:#39d353;}
+.gh-legend{display:flex;align-items:center;justify-content:flex-end;gap:3px;margin-top:7px;font-size:11px;color:var(--gh-muted);}
+.gh-legend-cell{width:10px;height:10px;border-radius:2px;}
+
+/* README box */
+.gh-readme-box{background:var(--gh-card);border:1px solid var(--gh-border);border-radius:8px;overflow:hidden;margin-bottom:22px;}
+.gh-readme-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 15px;border-bottom:1px solid var(--gh-border);background:rgba(255,255,255,.02);}
+.gh-readme-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;}
+.gh-readme-body{padding:18px 22px;font-size:14px;line-height:1.7;}
+
+/* ════════════════════════════════════════
+   README RENDERED STYLES
+════════════════════════════════════════ */
+.readme-content h1{font-size:2em;border-bottom:1px solid var(--gh-border);padding-bottom:.3em;margin:22px 0 14px;}
+.readme-content h2{font-size:1.5em;border-bottom:1px solid var(--gh-border);padding-bottom:.3em;margin:22px 0 14px;}
+.readme-content h3{font-size:1.15em;margin:14px 0 8px;}
+.readme-content p{margin-bottom:11px;}
+.readme-content hr{border:none;border-top:1px solid var(--gh-border);margin:20px 0;}
+.readme-content pre{background:var(--gh-bg);border:1px solid var(--gh-border);border-radius:8px;padding:15px;font-family:var(--font-mono);font-size:12.5px;overflow-x:auto;margin:14px 0;line-height:1.7;}
+.readme-content code{background:rgba(255,255,255,.07);border-radius:4px;padding:2px 5px;font-family:var(--font-mono);font-size:12px;}
+.readme-content pre code{background:transparent;padding:0;}
+.readme-content img{max-width:100%;border-radius:5px;margin:3px 2px;vertical-align:middle;}
+.readme-content a{color:var(--gh-blue);text-decoration:none;}
+.readme-content a:hover{text-decoration:underline;}
+.readme-content ul,.readme-content ol{padding-left:22px;margin-bottom:11px;}
+.readme-content li{margin-bottom:3px;}
+.readme-content .ac{text-align:center;}
+.yaml-key{color:#79b8ff;} .yaml-val{color:#a8d8a8;} .yaml-str{color:#f0a500;} .yaml-arr{color:#7d8590;} .yaml-cmt{color:#334455;}
+
+/* ════════════════════════════════════════
+   EXPORT TAB
+════════════════════════════════════════ */
+.exp-panel{padding:24px;}
+.exp-title{font-size:19px;font-weight:700;margin-bottom:5px;}
+.exp-sub{font-size:13px;color:var(--gh-muted);margin-bottom:22px;}
+.exp-code-wrap{background:#010409;border:1px solid var(--gh-border);border-radius:10px;overflow:hidden;margin-bottom:22px;}
+.exp-code-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 15px;background:var(--gh-card);border-bottom:1px solid var(--gh-border);}
+.exp-code-label{font-size:12px;font-weight:600;color:var(--gh-muted);text-transform:uppercase;letter-spacing:.6px;}
+.copy-btn{padding:5px 14px;background:var(--app-accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-sans);transition:all .2s;}
+.copy-btn:hover{background:var(--app-accent-h);}
+.exp-code{padding:18px;font-family:var(--font-mono);font-size:12px;line-height:1.7;color:#a8d8a8;max-height:360px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;scrollbar-width:thin;scrollbar-color:var(--gh-border) transparent;}
+.deploy-box{background:var(--gh-card);border:1px solid var(--gh-border);border-radius:10px;padding:20px;}
+.deploy-title{font-size:15px;font-weight:700;margin-bottom:16px;}
+.deploy-step{display:flex;gap:13px;margin-bottom:14px;align-items:flex-start;}
+.deploy-step:last-child{margin-bottom:0;}
+.step-circle{width:26px;height:26px;border-radius:50%;background:var(--app-accent);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-content{flex:1;}
+.step-heading{font-size:14px;font-weight:600;margin-bottom:3px;}
+.step-desc{font-size:13px;color:var(--gh-muted);line-height:1.5;}
+.step-code{display:inline-block;background:var(--gh-bg);border:1px solid var(--gh-border);border-radius:5px;padding:2px 9px;font-family:var(--font-mono);font-size:12px;color:var(--gh-blue);margin-top:5px;}
+.deploy-link{color:var(--gh-blue);text-decoration:none;font-weight:600;}
+.deploy-link:hover{text-decoration:underline;}
+.info-box{display:flex;gap:8px;padding:12px 14px;border-radius:8px;font-size:13px;margin-top:14px;background:rgba(47,129,247,.07);border:1px solid rgba(47,129,247,.22);color:#79b8ff;line-height:1.5;}
+
+/* ════════════════════════════════════════
+   README STANDALONE TAB
+════════════════════════════════════════ */
+#view-readme{background:var(--gh-bg);}
+.readme-standalone{max-width:860px;margin:0 auto;padding:30px 24px;}
+
+/* ════════════════════════════════════════
+   TOAST
+════════════════════════════════════════ */
+#toast{position:fixed;bottom:22px;right:22px;background:var(--gh-green);color:#fff;padding:11px 18px;border-radius:9px;font-weight:600;font-size:13px;transform:translateY(80px);transition:transform .3s;z-index:9999;box-shadow:0 8px 22px rgba(63,185,80,.35);}
+</style>
+</head>
+<body>
+
+<!-- ══════════ TOOLBAR ══════════ -->
+<header class="toolbar">
+  <div class="toolbar-left">
+    <div class="toolbar-logo">
+      <svg width="22" height="22" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      Profile Reviewer
+    </div>
+    <div class="toolbar-steps">
+      <div class="step done"><div class="step-num">1</div>Edit</div>
+      <span class="step-arr">›</span>
+      <div class="step active"><div class="step-num">2</div>Preview</div>
+      <span class="step-arr">›</span>
+      <div class="step"><div class="step-num">3</div>Export</div>
+    </div>
+  </div>
+  <div class="toolbar-right">
+    <div class="live-badge">Live Preview</div>
+    <button class="tbtn" onclick="switchPrevTab('readme')">README View</button>
+    <button class="tbtn tbtn-primary" onclick="switchPrevTab('export');updateExport()">⬇ Export README</button>
+  </div>
+</header>
+
+<!-- ══════════ MAIN ══════════ -->
+<div class="main">
+
+  <!-- ── EDITOR ── -->
+  <div class="ed-panel">
+    <div class="ed-tabs">
+      <div class="ed-tab active" data-et="profile">👤 Profile</div>
+      <div class="ed-tab" data-et="skills">🛠 Skills</div>
+      <div class="ed-tab" data-et="repos">📌 Repos</div>
+      <div class="ed-tab" data-et="sections">⚙️ Sections</div>
+    </div>
+    <div class="ed-body">
+
+      <!-- PROFILE -->
+      <div class="ed-sec active" id="et-profile">
+        <div class="fg"><label class="fl">Full Name</label><input class="fi" id="i-name" value="Abhishek Chauhan" oninput="S.name=this.value;render()"></div>
+        <div class="fg"><label class="fl">GitHub Username</label><input class="fi" id="i-un" value="abhishekchauhan1365" oninput="S.username=this.value;render()"><div class="fhint">Used in all badge & stats URLs</div></div>
+        <div class="fg"><label class="fl">Role / Title</label><input class="fi" id="i-role" value="Full-Stack Developer" oninput="S.role=this.value;render()"></div>
+        <div class="fg"><label class="fl">Bio / Tagline</label><textarea class="fta" id="i-bio" oninput="S.bio=this.value;render()">Full-Stack Developer · Open Source Enthusiast · Cloud Explorer ☁️</textarea></div>
+        <div class="fg"><label class="fl">Location</label><input class="fi" id="i-loc" value="India 🇮🇳" oninput="S.location=this.value;render()"></div>
+        <div class="fg"><label class="fl">Email</label><input class="fi" id="i-email" value="abhishekchauhan1365@gmail.com" oninput="S.email=this.value;render()"></div>
+        <div class="fg"><label class="fl">Website / Portfolio</label><input class="fi" id="i-web" placeholder="https://yoursite.com" oninput="S.website=this.value;render()"></div>
+        <div class="fg"><label class="fl">LinkedIn Username</label><input class="fi" id="i-li" value="abhishekchauhan1365" oninput="S.linkedin=this.value;render()"></div>
+        <div class="fg"><label class="fl">Twitter / X Handle</label><input class="fi" id="i-tw" value="abhishekchauhan1365" oninput="S.twitter=this.value;render()"></div>
+        <hr class="ed-divider">
+        <div class="fg">
+          <label class="fl">Currently Learning</label>
+          <div class="pill-wrap" id="lrn-wrap" onclick="document.getElementById('lrn-inp').focus()">
+            <input class="pill-input" id="lrn-inp" placeholder="Type & press Enter…" onkeydown="pillKey(event,'lrn')">
+          </div>
+          <div class="fhint">Press Enter to add each item</div>
+        </div>
+        <div class="fg">
+          <label class="fl">Fun Facts</label>
+          <div class="pill-wrap" id="fun-wrap" onclick="document.getElementById('fun-inp').focus()">
+            <input class="pill-input" id="fun-inp" placeholder="Type & press Enter…" onkeydown="pillKey(event,'fun')">
+          </div>
+        </div>
+      </div>
+
+      <!-- SKILLS -->
+      <div class="ed-sec" id="et-skills">
+        <div class="ed-sub">Languages</div>
+        <div class="chip-grid" id="cg-lang"></div>
+        <hr class="ed-divider">
+        <div class="ed-sub">Frameworks & Libraries</div>
+        <div class="chip-grid" id="cg-fw"></div>
+        <hr class="ed-divider">
+        <div class="ed-sub">Cloud & DevOps</div>
+        <div class="chip-grid" id="cg-tools"></div>
+      </div>
+
+      <!-- REPOS -->
+      <div class="ed-sec" id="et-repos">
+        <div class="fhint" style="margin-bottom:13px">Up to 6 pinned repos shown on your profile.</div>
+        <div id="repo-list"></div>
+        <button class="add-repo-btn" onclick="addRepo()">＋ Add Repository</button>
+      </div>
+
+      <!-- SECTIONS -->
+      <div class="ed-sec" id="et-sections">
+        <div class="fhint" style="margin-bottom:14px">Toggle which sections appear in your README.</div>
+        <div id="sec-toggles"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── PREVIEW ── -->
+  <div class="prev-panel">
+    <div class="prev-tabs">
+      <div class="prev-tab active" data-pv="profile"><div class="tab-pip"></div>Profile Preview</div>
+      <div class="prev-tab" data-pv="readme"><div class="tab-pip"></div>README Preview</div>
+      <div class="prev-tab" data-pv="export"><div class="tab-pip"></div>Export</div>
+    </div>
+
+    <!-- PROFILE VIEW -->
+    <div class="prev-view active" id="view-profile">
+      <!-- GH Navbar -->
+      <div class="gh-nav">
+        <svg fill="var(--gh-text)" width="28" height="28" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <div class="gh-nav-search"><span style="opacity:.45">🔍</span><span>Search or jump to…</span><span style="margin-left:auto;background:var(--gh-border);border-radius:3px;padding:1px 5px;font-size:10px">/</span></div>
+        <div class="gh-nav-links">
+          <span class="gh-nav-link">Pull requests</span>
+          <span class="gh-nav-link">Issues</span>
+          <span class="gh-nav-link">Marketplace</span>
+          <span class="gh-nav-link">Explore</span>
+        </div>
+        <div class="gh-nav-r">
+          <div class="gh-icon-btn">🔔</div>
+          <div class="gh-icon-btn">＋</div>
+          <div class="gh-av-sm" id="nav-av">AC</div>
+        </div>
+      </div>
+      <!-- GH Body -->
+      <div class="gh-body">
+        <div class="gh-sidebar" id="gh-sb"></div>
+        <div class="gh-main" id="gh-mn"></div>
+      </div>
+    </div>
+
+    <!-- README VIEW -->
+    <div class="prev-view" id="view-readme">
+      <div class="readme-standalone">
+        <div class="readme-content" id="readme-render"></div>
+      </div>
+    </div>
+
+    <!-- EXPORT VIEW -->
+    <div class="prev-view" id="view-export">
+      <div class="exp-panel">
+        <div class="exp-title">📄 Your README.md</div>
+        <div class="exp-sub">Copy and paste into your <code style="font-family:var(--font-mono);background:rgba(255,255,255,.07);padding:2px 6px;border-radius:4px" id="exp-repo-label">abhishekchauhan1365/abhishekchauhan1365</code> repository</div>
+        <div class="exp-code-wrap">
+          <div class="exp-code-hdr">
+            <div class="exp-code-label">📝 README.md</div>
+            <button class="copy-btn" onclick="copyReadme()">Copy to Clipboard</button>
+          </div>
+          <div class="exp-code" id="exp-code">Generating…</div>
+        </div>
+        <div class="deploy-box">
+          <div class="deploy-title">🚀 How to Deploy in 4 Steps</div>
+          <div class="deploy-step">
+            <div class="step-circle">1</div>
+            <div class="step-content">
+              <div class="step-heading">Create the special repository</div>
+              <div class="step-desc">Go to <a class="deploy-link" href="https://github.com/new" target="_blank">github.com/new</a> → name it exactly <span class="step-code" id="exp-repo-name">abhishekchauhan1365</span> → set it <strong>Public</strong> → check "Add a README file".</div>
+            </div>
+          </div>
+          <div class="deploy-step">
+            <div class="step-circle">2</div>
+            <div class="step-content">
+              <div class="step-heading">Paste your README</div>
+              <div class="step-desc">In the repo, click the ✏️ edit button → Select all → Delete → Paste copied content → Click <strong>Commit changes</strong>.</div>
+            </div>
+          </div>
+          <div class="deploy-step">
+            <div class="step-circle">3</div>
+            <div class="step-content">
+              <div class="step-heading">Enable WakaTime (Optional)</div>
+              <div class="step-desc">Install the <a class="deploy-link" href="https://wakatime.com/" target="_blank">WakaTime IDE extension</a> and add the <a class="deploy-link" href="https://github.com/marketplace/actions/waka-readme" target="_blank">WakaTime GitHub Action</a> to auto-update coding stats.</div>
+            </div>
+          </div>
+          <div class="deploy-step">
+            <div class="step-circle">4</div>
+            <div class="step-content">
+              <div class="step-heading">You're live! 🎉</div>
+              <div class="step-desc">Visit <span class="step-code" id="exp-gh-link">github.com/abhishekchauhan1365</span> — your profile README appears automatically.</div>
+            </div>
+          </div>
+          <div class="info-box">
+            <span style="font-size:15px;flex-shrink:0">ℹ️</span>
+            <span>Stats cards (github-readme-stats, streak-stats, trophies) load live from external services using your real username — they'll display your actual GitHub data once deployed.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast">✅ README copied to clipboard!</div>
+
+<script>
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+const S = {
+  name:'Abhishek Chauhan', username:'abhishekchauhan1365',
+  role:'Full-Stack Developer',
+  bio:'Full-Stack Developer · Open Source Enthusiast · Cloud Explorer ☁️',
+  location:'India 🇮🇳', email:'abhishekchauhan1365@gmail.com',
+  website:'', linkedin:'abhishekchauhan1365', twitter:'abhishekchauhan1365',
+  learning:['Cloud Architecture','Distributed Systems','DevOps & CI/CD','ML Ops'],
+  funFacts:['Debugging > writing code 🐛','Coffee-fueled late-night coder ☕','Always exploring new tech stacks 🚀'],
+  langs:{Python:true,JavaScript:true,TypeScript:true,Java:true,'C/C++':true,SQL:true,'HTML/CSS':true,Go:false,Rust:false,Bash:false,'C#':false},
+  frameworks:{React:true,'Next.js':true,'Node.js':true,FastAPI:true,'Spring Boot':true,'Vue.js':false,'Django':false,'Express.js':false},
+  tools:{Docker:true,Kubernetes:true,AWS:true,GCP:true,Azure:true,'GitHub Actions':true,Git:true,Terraform:false,Redis:false},
+  repos:[
+    {name:'portfolio-website',desc:'Personal portfolio built with Next.js & TypeScript',lang:'TypeScript',stars:24,forks:6},
+    {name:'fastapi-starter',desc:'Production-ready FastAPI boilerplate with Docker & JWT Auth',lang:'Python',stars:87,forks:21},
+    {name:'cloud-infra-terraform',desc:'Terraform modules for scalable AWS infrastructure setup',lang:'HCL',stars:15,forks:4},
+    {name:'react-component-lib',desc:'A reusable, accessible React UI component library',lang:'JavaScript',stars:33,forks:9},
+  ],
+  sections:{about:true,stack:true,stats:true,streak:true,graph:true,topLangs:true,waka:true,trophies:true,connect:true}
+};
+
+/* ══════════════════════════════════════════
+   MAPS
+══════════════════════════════════════════ */
+const LC = {Python:'#3572A5',JavaScript:'#f1e05a',TypeScript:'#2b7489',Java:'#b07219','C/C++':'#f34b7d',SQL:'#e38c00','HTML/CSS':'#e34c26',Go:'#00ADD8',Rust:'#dea584',Bash:'#89e051','C#':'#178600',HCL:'#844FBA'};
+const BM = {
+  Python:'Python-3776AB?logo=python&logoColor=white',
+  JavaScript:'JavaScript-F7DF1E?logo=javascript&logoColor=black',
+  TypeScript:'TypeScript-3178C6?logo=typescript&logoColor=white',
+  Java:'Java-ED8B00?logo=openjdk&logoColor=white',
+  'C/C++':'C%2FC%2B%2B-00599C?logo=c%2B%2B&logoColor=white',
+  SQL:'SQL-4479A1?logo=mysql&logoColor=white',
+  'HTML/CSS':'HTML%2FCSS-E34F26?logo=html5&logoColor=white',
+  Go:'Go-00ADD8?logo=go&logoColor=white',Rust:'Rust-000000?logo=rust&logoColor=white',
+  Bash:'Bash-4EAA25?logo=gnu-bash&logoColor=white',
+  React:'React-20232A?logo=react&logoColor=61DAFB',
+  'Next.js':'Next.js-000000?logo=next.js&logoColor=white',
+  'Node.js':'Node.js-339933?logo=node.js&logoColor=white',
+  FastAPI:'FastAPI-009688?logo=fastapi&logoColor=white',
+  'Spring Boot':'Spring_Boot-6DB33F?logo=spring-boot&logoColor=white',
+  'Vue.js':'Vue.js-4FC08D?logo=vue.js&logoColor=white',
+  Django:'Django-092E20?logo=django&logoColor=white',
+  'Express.js':'Express.js-000000?logo=express&logoColor=white',
+  Docker:'Docker-2496ED?logo=docker&logoColor=white',
+  Kubernetes:'Kubernetes-326CE5?logo=kubernetes&logoColor=white',
+  AWS:'AWS-232F3E?logo=amazon-aws&logoColor=white',
+  GCP:'GCP-4285F4?logo=google-cloud&logoColor=white',
+  Azure:'Azure-0078D4?logo=microsoft-azure&logoColor=white',
+  'GitHub Actions':'GitHub_Actions-2088FF?logo=github-actions&logoColor=white',
+  Git:'Git-F05032?logo=git&logoColor=white',
+  Terraform:'Terraform-7B42BC?logo=terraform&logoColor=white',
+  Redis:'Redis-DC382D?logo=redis&logoColor=white'
+};
+const SMETA = {
+  about:{l:'👨‍💻 About Me',s:'YAML-style bio card'},
+  stack:{l:'🛠 Tech Stack',s:'Language & framework badges'},
+  stats:{l:'📊 GitHub Stats',s:'github-readme-stats card'},
+  streak:{l:'🔥 Streak Stats',s:'Contribution streak counter'},
+  graph:{l:'📅 Contribution Graph',s:'Full-year heatmap widget'},
+  topLangs:{l:'💬 Top Languages',s:'Language breakdown card'},
+  waka:{l:'⏱ WakaTime Stats',s:'Coding activity from WakaTime'},
+  trophies:{l:'🏆 Trophies',s:'GitHub trophy showcase'},
+  connect:{l:'🌐 Connect',s:'Social media link badges'}
+};
+
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function badge(k){return BM[k]?`<img src="https://img.shields.io/badge/${BM[k]}&style=for-the-badge" alt="${k}" style="margin:2px" onerror="this.style.opacity='.4'"/>`:''}
+
+/* ══════════════════════════════════════════
+   BUILD README HTML
+══════════════════════════════════════════ */
+function buildHtml(){
+  const u=S.username;
+  const aL=Object.entries(S.langs).filter(([,v])=>v).map(([k])=>k);
+  const aF=Object.entries(S.frameworks).filter(([,v])=>v).map(([k])=>k);
+  const aT=Object.entries(S.tools).filter(([,v])=>v).map(([k])=>k);
+  let h='';
+
+  // Header
+  h+=`<div class="ac">
+    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=24&duration=3000&pause=1000&color=2F81F7&center=true&vCenter=true&width=700&lines=Hi%2C+I'm+${encodeURIComponent(S.name)}+%F0%9F%91%8B;${encodeURIComponent(S.role)}+%7C+Problem+Solver;Building+scalable+solutions+%F0%9F%9A%80" alt="typing" onerror="this.style.display='none'"/>
+  </div>
+  <div class="ac" style="margin:10px 0">
+    <img src="https://komarev.com/ghpvc/?username=${u}&label=Profile+Views&color=2f81f7&style=flat-square" alt="views" onerror="this.style.display='none'"/>
+    <img src="https://img.shields.io/github/followers/${u}?label=Followers&style=flat-square&color=2f81f7" alt="followers" onerror="this.style.display='none'"/>
+  </div><hr>`;
+
+  // About
+  if(S.sections.about){
+    const lrn=S.learning.map(x=>`  <span class="yaml-arr">-</span> <span class="yaml-str">"${esc(x)}"</span>`).join('\n');
+    const ff=S.funFacts.map(x=>`  <span class="yaml-arr">-</span> <span class="yaml-str">"${esc(x)}"</span>`).join('\n');
+    h+=`<h2>👨‍💻 About Me</h2>
+    <pre><code><span class="yaml-key">name</span><span class="yaml-arr">:</span>     <span class="yaml-val">${esc(S.name)}</span>
+<span class="yaml-key">role</span><span class="yaml-arr">:</span>     <span class="yaml-val">${esc(S.role)}</span>
+<span class="yaml-key">location</span><span class="yaml-arr">:</span> <span class="yaml-val">${esc(S.location)}</span>
+<span class="yaml-key">currently_learning</span><span class="yaml-arr">:</span>
+${lrn}
+<span class="yaml-key">fun_facts</span><span class="yaml-arr">:</span>
+${ff}</code></pre><hr>`;
+  }
+
+  // Stack
+  if(S.sections.stack){
+    h+=`<h2>🛠️ Tech Stack</h2>
+    <h3>💻 Languages</h3><p>${aL.map(badge).join(' ')}</p>
+    <h3>⚙️ Frameworks</h3><p>${aF.map(badge).join(' ')}</p>
+    <h3>☁️ Cloud & DevOps</h3><p>${aT.map(badge).join(' ')}</p><hr>`;
+  }
+
+  // Stats
+  if(S.sections.stats||S.sections.topLangs||S.sections.streak){
+    h+=`<h2>📊 GitHub Stats</h2><div class="ac">`;
+    if(S.sections.stats) h+=`<img width="49%" src="https://github-readme-stats.vercel.app/api?username=${u}&show_icons=true&theme=github_dark&hide_border=true&count_private=true&include_all_commits=true" alt="stats" onerror="this.style.display='none'"/>`;
+    if(S.sections.topLangs) h+=`<img width="49%" src="https://github-readme-stats.vercel.app/api/top-langs/?username=${u}&layout=compact&theme=github_dark&hide_border=true&langs_count=8" alt="langs" onerror="this.style.display='none'"/>`;
+    h+=`</div>`;
+    if(S.sections.streak) h+=`<div class="ac"><img width="60%" src="https://github-readme-streak-stats.herokuapp.com/?user=${u}&theme=github-dark-blue&hide_border=true" alt="streak" onerror="this.style.display='none'"/></div>`;
+    h+=`<hr>`;
+  }
+
+  // Trophies
+  if(S.sections.trophies){
+    h+=`<h2>🏆 GitHub Trophies</h2>
+    <div class="ac"><img src="https://github-profile-trophy.vercel.app/?username=${u}&theme=algolia&no-frame=true&no-bg=true&column=7&margin-w=4" alt="trophies" onerror="this.style.display='none'"/></div><hr>`;
+  }
+
+  // WakaTime
+  if(S.sections.waka){
+    h+=`<h2>⏱️ Coding Activity</h2>
+    <pre><code><span class="yaml-cmt">&#35; Auto-updated weekly via WakaTime GitHub Action</span>
+<span class="yaml-key">Python     </span> <span class="yaml-val">████████████░░░░░░   40.0 %</span>
+<span class="yaml-key">TypeScript </span> <span class="yaml-val">████████░░░░░░░░░░   28.0 %</span>
+<span class="yaml-key">JavaScript </span> <span class="yaml-val">█████░░░░░░░░░░░░░   19.0 %</span>
+<span class="yaml-key">Java       </span> <span class="yaml-val">███░░░░░░░░░░░░░░░   11.0 %</span>
+<span class="yaml-key">Bash       </span> <span class="yaml-val">█░░░░░░░░░░░░░░░░░    2.0 %</span></code></pre><hr>`;
+  }
+
+  // Connect
+  if(S.sections.connect){
+    let cb='';
+    if(S.linkedin) cb+=`<a href="https://linkedin.com/in/${S.linkedin}" target="_blank"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" onerror="this.style.display='none'"/></a> `;
+    if(S.twitter) cb+=`<a href="https://twitter.com/${S.twitter}" target="_blank"><img src="https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white" alt="Twitter" onerror="this.style.display='none'"/></a> `;
+    if(S.email) cb+=`<a href="mailto:${S.email}"><img src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Gmail" onerror="this.style.display='none'"/></a> `;
+    cb+=`<a href="https://github.com/${u}" target="_blank"><img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" onerror="this.style.display='none'"/></a>`;
+    h+=`<h2>🌐 Connect With Me</h2><p>${cb}</p><hr>`;
+  }
+
+  h+=`<div class="ac"><em>✨ "First, solve the problem. Then, write the code."</em></div>`;
+  return h;
+}
+
+/* ══════════════════════════════════════════
+   BUILD README MARKDOWN
+══════════════════════════════════════════ */
+function buildMd(){
+  const u=S.username, bt='`', t3=bt+bt+bt;
+  const aL=Object.entries(S.langs).filter(([,v])=>v).map(([k])=>k);
+  const aF=Object.entries(S.frameworks).filter(([,v])=>v).map(([k])=>k);
+  const aT=Object.entries(S.tools).filter(([,v])=>v).map(([k])=>k);
+  let m='';
+  m+=`<h1 align="center">\n  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=26&duration=3000&pause=1000&color=2F81F7&center=true&vCenter=true&width=700&lines=Hi%2C+I'm+${encodeURIComponent(S.name)}+%F0%9F%91%8B;${encodeURIComponent(S.role)}+%7C+Problem+Solver;Building+scalable+solutions+%F0%9F%9A%80" alt="Typing SVG" />\n</h1>\n\n`;
+  m+=`<p align="center">\n  <img src="https://komarev.com/ghpvc/?username=${u}&label=Profile+Views&color=2f81f7&style=flat-square" />\n  <img src="https://img.shields.io/github/followers/${u}?label=Followers&style=flat-square&color=2f81f7" />\n</p>\n\n---\n\n`;
+  if(S.sections.about){
+    const lrn=S.learning.map(x=>`  - "${x}"`).join('\n');
+    const ff=S.funFacts.map(x=>`  - "${x}"`).join('\n');
+    m+=`## 👨‍💻 About Me\n\n${t3}yaml\nname:     ${S.name}\nrole:     ${S.role}\nlocation: ${S.location}\ncurrently_learning:\n${lrn}\nfun_facts:\n${ff}\n${t3}\n\n---\n\n`;
+  }
+  if(S.sections.stack){
+    m+=`## 🛠️ Tech Stack\n\n### 💻 Languages\n<p align="left">\n`;
+    aL.forEach(l=>{if(BM[l])m+=`  <img src="https://img.shields.io/badge/${BM[l]}&style=for-the-badge" />\n`;});
+    m+=`</p>\n\n### ⚙️ Frameworks\n<p align="left">\n`;
+    aF.forEach(f=>{if(BM[f])m+=`  <img src="https://img.shields.io/badge/${BM[f]}&style=for-the-badge" />\n`;});
+    m+=`</p>\n\n### ☁️ Cloud & DevOps\n<p align="left">\n`;
+    aT.forEach(t=>{if(BM[t])m+=`  <img src="https://img.shields.io/badge/${BM[t]}&style=for-the-badge" />\n`;});
+    m+=`</p>\n\n---\n\n`;
+  }
+  if(S.sections.stats||S.sections.topLangs||S.sections.streak){
+    m+=`## 📊 GitHub Stats\n\n<p align="center">\n`;
+    if(S.sections.stats) m+=`  <img width="49%" src="https://github-readme-stats.vercel.app/api?username=${u}&show_icons=true&theme=github_dark&hide_border=true&count_private=true&include_all_commits=true" />\n`;
+    if(S.sections.topLangs) m+=`  <img width="49%" src="https://github-readme-stats.vercel.app/api/top-langs/?username=${u}&layout=compact&theme=github_dark&hide_border=true&langs_count=8" />\n`;
+    m+=`</p>\n`;
+    if(S.sections.streak) m+=`\n<p align="center">\n  <img width="60%" src="https://github-readme-streak-stats.herokuapp.com/?user=${u}&theme=github-dark-blue&hide_border=true" />\n</p>\n`;
+    m+=`\n---\n\n`;
+  }
+  if(S.sections.trophies){
+    m+=`## 🏆 GitHub Trophies\n\n<p align="center">\n  <img src="https://github-profile-trophy.vercel.app/?username=${u}&theme=algolia&no-frame=true&no-bg=true&column=7&margin-w=4" />\n</p>\n\n---\n\n`;
+  }
+  if(S.sections.waka){
+    m+=`## ⏱️ Coding Activity\n\n<!--START_SECTION:waka-->\n<!--END_SECTION:waka-->\n\n---\n\n`;
+  }
+  if(S.sections.connect){
+    m+=`## 🌐 Connect With Me\n\n<p align="left">\n`;
+    if(S.linkedin) m+=`  <a href="https://linkedin.com/in/${S.linkedin}"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" /></a>\n`;
+    if(S.twitter) m+=`  <a href="https://twitter.com/${S.twitter}"><img src="https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white" /></a>\n`;
+    if(S.email) m+=`  <a href="mailto:${S.email}"><img src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white" /></a>\n`;
+    m+=`  <a href="https://github.com/${u}"><img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" /></a>\n</p>\n\n---\n\n`;
+  }
+  m+=`<p align="center"><i>✨ "First, solve the problem. Then, write the code."</i></p>\n`;
+  return m;
+}
+
+/* ══════════════════════════════════════════
+   RENDER SIDEBAR
+══════════════════════════════════════════ */
+function renderSidebar(){
+  const init=S.name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2);
+  document.getElementById('nav-av').textContent=init;
+  let meta='';
+  if(S.role) meta+=mi('💼',esc(S.role));
+  if(S.location) meta+=mi('📍',esc(S.location));
+  if(S.email) meta+=mi('📧',`<a href="mailto:${S.email}">${esc(S.email)}</a>`);
+  if(S.website) meta+=mi('🔗',`<a href="${esc(S.website)}" target="_blank">${esc(S.website)}</a>`);
+  if(S.twitter) meta+=mi('🐦',`<a href="https://twitter.com/${S.twitter}" target="_blank">@${esc(S.twitter)}</a>`);
+  if(S.linkedin) meta+=mi('💼',`<a href="https://linkedin.com/in/${S.linkedin}" target="_blank">in/${esc(S.linkedin)}</a>`);
+  document.getElementById('gh-sb').innerHTML=`
+    <div class="gh-avatar-lg">${init}</div>
+    <div class="gh-name">${esc(S.name)}</div>
+    <div class="gh-handle">${esc(S.username)}</div>
+    <div class="gh-bio">${esc(S.bio)}</div>
+    <button class="gh-follow-btn">Follow</button>
+    <button class="gh-sponsor-btn">❤ Sponsor</button>
+    <div class="gh-stats-row">
+      <div class="gh-stat-l"><span class="gh-stat-n">128</span>&nbsp;<span class="gh-stat-s">repositories</span></div>
+      <div class="gh-stat-l"><span class="gh-stat-n">340</span>&nbsp;<span class="gh-stat-s">followers</span></div>
+      <div class="gh-stat-l"><span class="gh-stat-n">210</span>&nbsp;<span class="gh-stat-s">following</span></div>
+    </div>
+    <div class="gh-meta">${meta}</div>
+    <div class="gh-ach"><div class="gh-ach-title">Achievements</div><div class="gh-ach-chips"><div class="gh-ach-chip">🦈 Pull Shark</div><div class="gh-ach-chip">⭐ Starstruck</div><div class="gh-ach-chip">🌱 YOLO</div></div></div>`;
+}
+function mi(icon,content){return `<div class="gh-meta-item"><span style="font-size:14px">${icon}</span>${content}</div>`;}
+
+/* ══════════════════════════════════════════
+   RENDER MAIN
+══════════════════════════════════════════ */
+function renderMain(){
+  // Pinned
+  let pins='';
+  S.repos.forEach(r=>{
+    const c=LC[r.lang]||'#7d8590';
+    pins+=`<div class="gh-repo-card">
+      <div class="gh-repo-hdr">
+        <svg fill="var(--gh-muted)" width="14" height="14" viewBox="0 0 16 16"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8Z"/></svg>
+        <a class="gh-repo-name" href="#">${esc(r.name)}</a>
+        <span class="gh-repo-vis">Public</span>
+      </div>
+      <div class="gh-repo-desc">${esc(r.desc)}</div>
+      <div class="gh-repo-meta">
+        <span><span class="lang-dot" style="background:${c}"></span> ${esc(r.lang)}</span>
+        <span>⭐ ${r.stars}</span><span>🍴 ${r.forks}</span>
+      </div>
+    </div>`;
+  });
+
+  // Contrib grid
+  const W=[.37,.26,.18,.12,.07];
+  let grid='';
+  for(let i=0;i<371;i++){
+    const r=Math.random();let acc=0,l=0;
+    for(let j=0;j<W.length;j++){acc+=W[j];if(r<acc){l=j;break;}}
+    grid+=`<div class="gh-cell" data-l="${l}"></div>`;
+  }
+
+  document.getElementById('gh-mn').innerHTML=`
+    <div class="gh-prof-nav">
+      <div class="gh-prof-nav-item active">Overview</div>
+      <div class="gh-prof-nav-item">Repositories <span class="gh-nav-badge">128</span></div>
+      <div class="gh-prof-nav-item">Projects</div>
+      <div class="gh-prof-nav-item">Packages</div>
+      <div class="gh-prof-nav-item">Stars</div>
+    </div>
+    ${S.repos.length?`<div class="gh-sec-title"><span>📌 Pinned</span><a href="#">Customize your pins</a></div><div class="gh-pinned-grid">${pins}</div>`:''}
+    <div class="gh-contrib-sec">
+      <div class="gh-contrib-hdr">
+        <span><span class="gh-contrib-ct">1,247 contributions</span> in the last year</span>
+        <span style="color:var(--gh-muted);font-size:12px">▾ Contribution settings</span>
+      </div>
+      <div class="gh-contrib-box">
+        <div class="gh-contrib-grid">${grid}</div>
+        <div class="gh-legend">Less
+          <div class="gh-legend-cell" style="background:#161b22;border:1px solid var(--gh-border)"></div>
+          <div class="gh-legend-cell" style="background:#0e4429"></div>
+          <div class="gh-legend-cell" style="background:#006d32"></div>
+          <div class="gh-legend-cell" style="background:#26a641"></div>
+          <div class="gh-legend-cell" style="background:#39d353"></div>
+          More
+        </div>
+      </div>
+    </div>
+    <div class="gh-readme-box">
+      <div class="gh-readme-hdr">
+        <div class="gh-readme-title">
+          <svg fill="var(--gh-muted)" width="14" height="14" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          ${esc(S.username)}<span style="color:var(--gh-muted)">/</span>${esc(S.username)}
+        </div>
+        <span style="font-size:11px;color:var(--gh-muted)">README.md</span>
+      </div>
+      <div class="gh-readme-body"><div class="readme-content" id="profile-rm"></div></div>
+    </div>`;
+
+  document.getElementById('profile-rm').innerHTML=buildHtml();
+}
+
+/* ══════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════ */
+function render(){
+  renderSidebar();
+  renderMain();
+  const rr=document.getElementById('readme-render');
+  if(rr) rr.innerHTML=buildHtml();
+}
+
+/* ══════════════════════════════════════════
+   CHIPS
+══════════════════════════════════════════ */
+function renderChips(){
+  const rg=(id,obj)=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.innerHTML=Object.keys(obj).map(k=>`<div class="chip${obj[k]?' on':''}" onclick="toggleChip('${id}','${k}')">${k}</div>`).join('');
+  };
+  rg('cg-lang',S.langs);rg('cg-fw',S.frameworks);rg('cg-tools',S.tools);
+}
+function toggleChip(gid,k){
+  if(gid==='cg-lang') S.langs[k]=!S.langs[k];
+  else if(gid==='cg-fw') S.frameworks[k]=!S.frameworks[k];
+  else S.tools[k]=!S.tools[k];
+  renderChips();render();
+}
+
+/* ══════════════════════════════════════════
+   REPOS
+══════════════════════════════════════════ */
+function renderRepos(){
+  const el=document.getElementById('repo-list');if(!el)return;
+  el.innerHTML=S.repos.map((r,i)=>`
+    <div class="repo-card-ed">
+      <div class="repo-card-ed-hdr">
+        <div class="repo-card-ed-title">📁 Repo ${i+1}</div>
+        <div class="repo-rm" onclick="removeRepo(${i})">×</div>
+      </div>
+      <div class="fg" style="margin-bottom:7px"><input class="fi" placeholder="Repository name" value="${esc(r.name)}" style="font-size:12px" oninput="S.repos[${i}].name=this.value;render()"></div>
+      <div class="fg" style="margin-bottom:7px"><input class="fi" placeholder="Short description" value="${esc(r.desc)}" style="font-size:12px" oninput="S.repos[${i}].desc=this.value;render()"></div>
+      <div class="repo-row">
+        <select class="sel" onchange="S.repos[${i}].lang=this.value;render()">
+          ${Object.keys(LC).map(l=>`<option value="${l}"${r.lang===l?' selected':''}>${l}</option>`).join('')}
+        </select>
+        <input class="fi" type="number" placeholder="⭐" value="${r.stars}" min="0" style="font-size:12px;text-align:center" oninput="S.repos[${i}].stars=+this.value;render()">
+      </div>
+    </div>`).join('');
+}
+function addRepo(){if(S.repos.length>=6)return;S.repos.push({name:'new-project',desc:'An awesome project',lang:'JavaScript',stars:0,forks:0});renderRepos();render();}
+function removeRepo(i){S.repos.splice(i,1);renderRepos();render();}
+
+/* ══════════════════════════════════════════
+   SECTION TOGGLES
+══════════════════════════════════════════ */
+function renderToggles(){
+  const el=document.getElementById('sec-toggles');if(!el)return;
+  el.innerHTML=Object.entries(SMETA).map(([k,m])=>`
+    <div class="toggle-row">
+      <div><div class="toggle-lbl">${m.l}</div><div class="toggle-sub">${m.s}</div></div>
+      <label class="toggle"><input type="checkbox"${S.sections[k]?' checked':''} onchange="S.sections['${k}']=this.checked;render()"><span class="tslider"></span></label>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════
+   PILLS
+══════════════════════════════════════════ */
+function renderPills(t){
+  const arr=t==='lrn'?S.learning:S.funFacts;
+  const wid=t==='lrn'?'lrn-wrap':'fun-wrap';
+  const iid=t==='lrn'?'lrn-inp':'fun-inp';
+  const wrap=document.getElementById(wid);
+  const inp=document.getElementById(iid);
+  if(!wrap||!inp)return;
+  wrap.querySelectorAll('.pill').forEach(p=>p.remove());
+  arr.forEach((item,i)=>{
+    const p=document.createElement('div');p.className='pill';
+    p.innerHTML=`${esc(item)}<span class="pill-x" onclick="rmPill('${t}',${i})">×</span>`;
+    wrap.insertBefore(p,inp);
+  });
+}
+function pillKey(e,t){
+  if(e.key==='Enter'&&e.target.value.trim()){
+    e.preventDefault();
+    const v=e.target.value.trim();
+    if(t==='lrn') S.learning.push(v); else S.funFacts.push(v);
+    e.target.value='';renderPills(t);render();
+  }
+}
+function rmPill(t,i){
+  if(t==='lrn') S.learning.splice(i,1); else S.funFacts.splice(i,1);
+  renderPills(t);render();
+}
+
+/* ══════════════════════════════════════════
+   TAB SWITCHING
+══════════════════════════════════════════ */
+document.querySelectorAll('.ed-tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.ed-tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.ed-sec').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('et-'+t.dataset.et).classList.add('active');
+  });
+});
+document.querySelectorAll('.prev-tab').forEach(t=>{
+  t.addEventListener('click',()=>switchPrevTab(t.dataset.pv));
+});
+function switchPrevTab(pv){
+  document.querySelectorAll('.prev-tab').forEach(t=>t.classList.toggle('active',t.dataset.pv===pv));
+  document.querySelectorAll('.prev-view').forEach(v=>v.classList.toggle('active',v.id==='view-'+pv));
+  if(pv==='export') updateExport();
+  if(pv==='readme'){const rr=document.getElementById('readme-render');if(rr)rr.innerHTML=buildHtml();}
+}
+
+/* ══════════════════════════════════════════
+   EXPORT
+══════════════════════════════════════════ */
+function updateExport(){
+  const md=buildMd();
+  const ec=document.getElementById('exp-code');if(ec)ec.textContent=md;
+  const rl=document.getElementById('exp-repo-label');if(rl)rl.textContent=`${S.username}/${S.username}`;
+  const rn=document.getElementById('exp-repo-name');if(rn)rn.textContent=S.username;
+  const gl=document.getElementById('exp-gh-link');if(gl)gl.textContent=`github.com/${S.username}`;
+}
+function copyReadme(){
+  navigator.clipboard.writeText(buildMd()).then(()=>{
+    const t=document.getElementById('toast');
+    t.style.transform='translateY(0)';
+    setTimeout(()=>t.style.transform='translateY(80px)',2800);
+  });
+}
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+function init(){
+  renderChips();renderRepos();renderToggles();
+  renderPills('lrn');renderPills('fun');
+  render();
+}
+init();
+</script>
+</body>
+</html>

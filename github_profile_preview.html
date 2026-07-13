@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abhishek Chauhan · GitHub Profile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --bg2: #161b22; --bg3: #1c2128; --border: #30363d;
+      --blue: #2f81f7; --blue-glow: rgba(47,129,247,0.18);
+      --green: #3fb950; --purple: #bc8cff; --orange: #f78166; --yellow: #e3b341;
+      --text: #e6edf3; --muted: #7d8590; --card: #161b22;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 40px;
+      background: rgba(13,17,23,0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .logo { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; }
+    nav .nav-links { display: flex; gap: 24px; }
+    nav .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }
+    nav .nav-links a:hover { color: var(--text); }
+    nav .nav-btn {
+      background: var(--blue); color: #fff; border: none; padding: 8px 18px;
+      border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: all .2s; font-family: 'Inter', sans-serif;
+    }
+    nav .nav-btn:hover { background: #388bfd; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(47,129,247,.35); }
+
+    .hero {
+      text-align: center; padding: 80px 20px 60px;
+      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(47,129,247,.12), transparent);
+      position: relative;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(47,129,247,.1); border: 1px solid rgba(47,129,247,.3);
+      padding: 5px 14px; border-radius: 100px; font-size: 12px; font-weight: 600;
+      color: var(--blue); margin-bottom: 24px; letter-spacing: .5px;
+    }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+    .hero h1 { font-size: clamp(2.2rem,5vw,3.6rem); font-weight: 800; line-height: 1.1; margin-bottom: 16px; letter-spacing: -1px; }
+    .hero h1 span { color: var(--blue); }
+    .hero p { color: var(--muted); font-size: 17px; max-width: 540px; margin: 0 auto 36px; line-height: 1.6; }
+    .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--blue); color: #fff; border: none; padding: 12px 28px;
+      border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+      font-family: 'Inter', sans-serif; transition: all .25s;
+    }
+    .btn-primary:hover { background: #388bfd; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(47,129,247,.4); }
+    .btn-secondary {
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      padding: 12px 28px; border-radius: 10px; font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: all .25s;
+    }
+    .btn-secondary:hover { border-color: var(--blue); color: var(--blue); transform: translateY(-2px); }
+
+    .profile-section { display: grid; grid-template-columns: 300px 1fr; gap: 28px; margin: 48px auto; max-width: 1100px; padding: 0 24px; }
+    @media(max-width:760px){ .profile-section{ grid-template-columns:1fr; } }
+    .sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+    .avatar-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 28px; text-align: center; position: relative; overflow: hidden;
+    }
+    .avatar-card-bg {
+      position: absolute; top: 0; left: 0; right: 0; height: 80px;
+      background: linear-gradient(135deg, #2f81f7 0%, #bc8cff 100%); opacity: .15;
+    }
+    .avatar-img {
+      width: 100px; height: 100px; border-radius: 50%;
+      border: 3px solid var(--border); background: linear-gradient(135deg, #2f81f7, #bc8cff);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 42px; font-weight: 800; color: #fff; margin: 10px auto 14px;
+      box-shadow: 0 0 0 4px rgba(47,129,247,.2), 0 8px 24px rgba(0,0,0,.4);
+      position: relative;
+    }
+    .online-dot {
+      position: absolute; bottom: 4px; right: 4px; width: 18px; height: 18px;
+      background: var(--green); border-radius: 50%; border: 2px solid var(--bg);
+    }
+    .avatar-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .handle { color: var(--muted); font-size: 14px; margin-bottom: 12px; }
+    .tagline { font-size: 13px; color: var(--text); line-height: 1.5; margin-bottom: 18px; }
+    .follow-btn {
+      width: 100%; background: var(--blue); color: #fff; border: none;
+      padding: 9px; border-radius: 8px; font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: all .2s; margin-bottom: 14px;
+    }
+    .follow-btn:hover { background: #388bfd; }
+    .meta-row { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+    .meta-icon { font-size: 14px; }
+    .stat-row { display: flex; gap: 16px; justify-content: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .stat-item { text-align: center; }
+    .stat-item strong { display: block; font-size: 18px; font-weight: 700; color: var(--blue); }
+    .stat-item small { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 22px; transition: border-color .2s, transform .2s;
+    }
+    .card:hover { border-color: rgba(47,129,247,.4); transform: translateY(-2px); }
+    .card-title {
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .8px; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title::before { content:''; width:3px; height:14px; background:var(--blue); border-radius:2px; }
+
+    .badge-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
+      border: 1px solid transparent; transition: all .2s; cursor: default;
+    }
+    .badge:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+    .badge-blue { background: rgba(47,129,247,.12); border-color: rgba(47,129,247,.3); color: #79b8ff; }
+    .badge-green { background: rgba(63,185,80,.1); border-color: rgba(63,185,80,.3); color: #56d364; }
+    .badge-purple { background: rgba(188,140,255,.1); border-color: rgba(188,140,255,.3); color: #bc8cff; }
+    .badge-orange { background: rgba(247,129,102,.1); border-color: rgba(247,129,102,.3); color: #f78166; }
+    .badge-yellow { background: rgba(227,179,65,.1); border-color: rgba(227,179,65,.3); color: #e3b341; }
+    .dot { width:6px; height:6px; border-radius:50%; }
+    .dot-blue{background:#2f81f7} .dot-green{background:#3fb950} .dot-purple{background:#bc8cff}
+    .dot-orange{background:#f78166} .dot-yellow{background:#e3b341}
+
+    .main { display: flex; flex-direction: column; gap: 22px; }
+
+    .yaml-block {
+      background: #0d1117; border: 1px solid var(--border); border-radius: 12px;
+      padding: 20px 24px; font-family: 'Fira Code', monospace; font-size: 13px; line-height: 1.8;
+      position: relative;
+    }
+    .yaml-dots { position: absolute; top: 10px; left: 16px; font-size: 11px; color: var(--border); letter-spacing: 4px; }
+    .yaml-block pre { margin-top: 22px; }
+    .yaml-key { color: #79b8ff; }
+    .yaml-val { color: #a8d8a8; }
+    .yaml-str { color: #f0a500; }
+    .yaml-arr { color: var(--muted); }
+
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media(max-width:600px){ .stats-grid{ grid-template-columns:1fr; } }
+    .stat-card {
+      background: #0d1117; border: 1px solid var(--border); border-radius: 12px;
+      padding: 18px 20px; position: relative; overflow: hidden; transition: all .25s;
+    }
+    .stat-card:hover { border-color: rgba(47,129,247,.4); transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,.3); }
+    .sc-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .7px; margin-bottom: 10px; }
+    .sc-value { font-size: 36px; font-weight: 800; color: var(--blue); line-height: 1; margin-bottom: 4px; }
+    .sc-sub { font-size: 12px; color: var(--muted); }
+    .sc-icon { position: absolute; right: 18px; top: 18px; font-size: 28px; opacity: .2; }
+    .sc-bar { margin-top: 12px; height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .sc-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--blue), var(--purple)); animation: barfill 1.5s ease forwards; }
+    @keyframes barfill { from{width:0} }
+
+    .contrib-grid { display: grid; grid-template-columns: repeat(52,1fr); gap: 3px; margin-top: 12px; }
+    .contrib-cell { width:100%; aspect-ratio:1; border-radius:3px; background:var(--border); transition: all .1s; cursor:pointer; }
+    .contrib-cell:hover { transform:scale(1.4); z-index:2; position:relative; }
+    .contrib-cell[data-v="1"]{background:#0e4429}
+    .contrib-cell[data-v="2"]{background:#006d32}
+    .contrib-cell[data-v="3"]{background:#26a641}
+    .contrib-cell[data-v="4"]{background:#39d353}
+
+    .streak-card {
+      background: #0d1117; border: 1px solid var(--border); border-radius: 12px;
+      padding: 20px; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 16px;
+    }
+    .streak-item { text-align: center; }
+    .s-val { font-size: 32px; font-weight: 800; color: var(--orange); }
+    .s-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin-top: 4px; }
+    .s-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .streak-divider { width:1px; height:60px; background:var(--border); }
+
+    .trophy-grid { display: flex; flex-wrap: wrap; gap: 14px; }
+    .trophy-item {
+      background: #0d1117; border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 18px; text-align: center; flex:1; min-width:120px;
+      transition: all .25s; cursor: default;
+    }
+    .trophy-item:hover { border-color: var(--yellow); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+    .t-icon { font-size: 28px; margin-bottom: 6px; }
+    .t-name { font-size: 11px; font-weight: 700; color: var(--yellow); letter-spacing: .4px; margin-bottom: 2px; }
+    .t-val { font-size: 11px; color: var(--muted); }
+
+    .connect-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+    .connect-item {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      background: #0d1117; border: 1px solid var(--border); border-radius: 12px;
+      padding: 18px 12px; color: var(--text); transition: all .25s;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .connect-item:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(0,0,0,.3); }
+    .ci-icon { font-size: 26px; }
+    .ci-github:hover{border-color:#fff} .ci-linkedin:hover{border-color:#0a66c2}
+    .ci-twitter:hover{border-color:#1da1f2} .ci-email:hover{border-color:#d14836}
+    .ci-sub { font-size:12px; color:var(--muted); }
+
+    .lang-bar-track { height:10px; border-radius:8px; overflow:hidden; display:flex; margin-bottom:14px; gap:2px; }
+    .lang-seg { height:100%; transition:flex .5s ease; border-radius:2px; }
+    .lang-legend { display:flex; flex-wrap:wrap; gap:12px; }
+    .lang-legend-item { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); }
+    .lang-dot { width:10px; height:10px; border-radius:50%; }
+
+    .waka-bar { margin-bottom: 10px; }
+    .waka-top { display:flex; justify-content:space-between; margin-bottom:5px; font-size:13px; }
+    .waka-track { height:8px; background:var(--border); border-radius:8px; overflow:hidden; }
+    .waka-fill { height:100%; border-radius:8px; }
+
+    .section-header { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+    .section-header h3 { font-size:16px; font-weight:700; }
+    .sh-icon { font-size:18px; }
+
+    .learning-pills { display:flex; flex-wrap:wrap; gap:10px; margin-top:4px; }
+    .learning-pill {
+      display:flex; align-items:center; gap:8px;
+      background:rgba(188,140,255,.08); border:1px solid rgba(188,140,255,.25);
+      color:var(--purple); padding:7px 14px; border-radius:100px;
+      font-size:13px; font-weight:500; transition:all .2s;
+    }
+    .learning-pill:hover { background:rgba(188,140,255,.16); transform:translateY(-2px); }
+
+    footer {
+      text-align:center; padding:40px 20px;
+      border-top:1px solid var(--border); margin-top:60px;
+      color:var(--muted); font-size:13px;
+    }
+    footer a { color:var(--blue); text-decoration:none; }
+
+    .reveal { opacity:0; transform:translateY(24px); transition:opacity .5s, transform .5s; }
+    .reveal.visible { opacity:1; transform:none; }
+
+    #toast {
+      position:fixed; bottom:24px; right:24px; background:var(--blue); color:#fff;
+      padding:12px 20px; border-radius:10px; font-weight:600; font-size:14px;
+      transform:translateY(80px); transition:transform .3s; z-index:999;
+      box-shadow:0 8px 24px rgba(47,129,247,.4);
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <span style="font-size:22px">🐙</span> GitHub Profile
+  </div>
+  <div class="nav-links">
+    <a href="#about">About</a>
+    <a href="#skills">Skills</a>
+    <a href="#stats">Stats</a>
+    <a href="#connect">Connect</a>
+  </div>
+  <button class="nav-btn" onclick="copyReadme()">⬇ Export README</button>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge"><span class="pulse">●</span> Profile Preview</div>
+  <h1>Hi, I'm <span>Abhishek</span> 👋</h1>
+  <p>Full-Stack Developer crafting scalable, elegant solutions. Turning ideas into impactful software.</p>
+  <div class="hero-actions">
+    <button class="btn-primary" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})">View Profile ↓</button>
+    <button class="btn-secondary" onclick="copyReadme()">Copy README</button>
+  </div>
+</div>
+
+<div class="profile-section" id="about">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <div class="avatar-card reveal">
+      <div class="avatar-card-bg"></div>
+      <div class="avatar-img" style="position:relative">
+        AC
+        <div class="online-dot"></div>
+      </div>
+      <h2>Abhishek Chauhan</h2>
+      <div class="handle">@abhishekchauhan1365</div>
+      <div class="tagline">Full-Stack Developer · Open Source Enthusiast · Cloud Explorer ☁️</div>
+      <button class="follow-btn">Follow</button>
+      <div class="meta-row"><span class="meta-icon">💼</span> Full-Stack Developer</div>
+      <div class="meta-row"><span class="meta-icon">📍</span> India 🇮🇳</div>
+      <div class="meta-row"><span class="meta-icon">📧</span> abhishekchauhan1365@gmail.com</div>
+      <div class="stat-row">
+        <div class="stat-item"><strong>128</strong><small>Repos</small></div>
+        <div class="stat-item"><strong>340</strong><small>Followers</small></div>
+        <div class="stat-item"><strong>210</strong><small>Following</small></div>
+      </div>
+    </div>
+
+    <div class="card reveal" id="skills">
+      <div class="card-title">Currently Learning</div>
+      <div class="learning-pills">
+        <div class="learning-pill">☁️ Cloud Architecture</div>
+        <div class="learning-pill">🔗 Distributed Systems</div>
+        <div class="learning-pill">⚙️ DevOps &amp; CI/CD</div>
+        <div class="learning-pill">🤖 ML Ops</div>
+      </div>
+    </div>
+
+    <div class="card reveal">
+      <div class="card-title">Languages</div>
+      <div class="badge-group">
+        <span class="badge badge-blue"><span class="dot dot-blue"></span>Python</span>
+        <span class="badge badge-yellow"><span class="dot dot-yellow"></span>JavaScript</span>
+        <span class="badge badge-blue"><span class="dot dot-blue"></span>TypeScript</span>
+        <span class="badge badge-orange"><span class="dot dot-orange"></span>Java</span>
+        <span class="badge badge-blue"><span class="dot dot-blue"></span>C / C++</span>
+        <span class="badge badge-green"><span class="dot dot-green"></span>SQL</span>
+        <span class="badge badge-orange"><span class="dot dot-orange"></span>HTML / CSS</span>
+      </div>
+    </div>
+
+    <div class="card reveal">
+      <div class="card-title">Frameworks &amp; Tools</div>
+      <div class="badge-group">
+        <span class="badge badge-blue"><span class="dot dot-blue"></span>React</span>
+        <span class="badge badge-blue"><span class="dot dot-blue"></span>Next.js</span>
+        <span class="badge badge-green"><span class="dot dot-green"></span>Node.js</span>
+        <span class="badge badge-green"><span class="dot dot-green"></span>FastAPI</span>
+        <span class="badge badge-green"><span class="dot dot-green"></span>Spring Boot</span>
+        <span class="badge badge-orange"><span class="dot dot-orange"></span>AWS</span>
+        <span class="badge badge-blue"><span class="dot dot-blue"></span>GCP</span>
+        <span class="badge badge-blue"><span class="dot dot-blue"></span>Azure</span>
+        <span class="badge badge-blue"><span class="dot dot-blue"></span>Docker</span>
+        <span class="badge badge-purple"><span class="dot dot-purple"></span>Kubernetes</span>
+        <span class="badge badge-purple"><span class="dot dot-purple"></span>GitHub Actions</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <div class="card reveal">
+      <div class="section-header"><span class="sh-icon">👨‍💻</span><h3>About Me</h3></div>
+      <div class="yaml-block">
+        <span class="yaml-dots">● ● ●</span>
+        <pre>
+<span class="yaml-key">name</span>:     <span class="yaml-val">Abhishek Chauhan</span>
+<span class="yaml-key">role</span>:     <span class="yaml-val">Full-Stack Developer</span>
+<span class="yaml-key">location</span>: <span class="yaml-val">India 🇮🇳</span>
+<span class="yaml-key">status</span>:   <span class="yaml-val">Open to opportunities 🟢</span>
+
+<span class="yaml-key">passionate_about</span>:
+  <span class="yaml-arr">-</span> <span class="yaml-str">"Building scalable web applications"</span>
+  <span class="yaml-arr">-</span> <span class="yaml-str">"Clean architecture &amp; system design"</span>
+  <span class="yaml-arr">-</span> <span class="yaml-str">"Open-source contributions"</span>
+
+<span class="yaml-key">fun_facts</span>:
+  <span class="yaml-arr">-</span> <span class="yaml-str">"Debugging > writing code 🐛"</span>
+  <span class="yaml-arr">-</span> <span class="yaml-str">"Coffee-fueled late-night coder ☕"</span>
+  <span class="yaml-arr">-</span> <span class="yaml-str">"Always exploring new tech stacks 🚀"</span>
+        </pre>
+      </div>
+    </div>
+
+    <div id="stats">
+      <div class="card reveal">
+        <div class="section-header"><span class="sh-icon">📊</span><h3>GitHub Stats</h3></div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="sc-label">Total Stars</div>
+            <div class="sc-value">847</div>
+            <div class="sc-sub">across all repos</div>
+            <div class="sc-icon">⭐</div>
+            <div class="sc-bar"><div class="sc-fill" style="width:78%"></div></div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">Commits (2024)</div>
+            <div class="sc-value">1.2k</div>
+            <div class="sc-sub">total commits this year</div>
+            <div class="sc-icon">💾</div>
+            <div class="sc-bar"><div class="sc-fill" style="width:65%"></div></div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">Pull Requests</div>
+            <div class="sc-value">243</div>
+            <div class="sc-sub">merged successfully</div>
+            <div class="sc-icon">🔀</div>
+            <div class="sc-bar"><div class="sc-fill" style="width:55%"></div></div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">Issues Closed</div>
+            <div class="sc-value">389</div>
+            <div class="sc-sub">bugs squashed 🐛</div>
+            <div class="sc-icon">✅</div>
+            <div class="sc-bar"><div class="sc-fill" style="width:70%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card reveal">
+      <div class="section-header"><span class="sh-icon">🔥</span><h3>Contribution Streak</h3></div>
+      <div class="streak-card">
+        <div class="streak-item">
+          <div class="s-val" style="color:var(--blue)">142</div>
+          <div class="s-label">Total Contributions</div>
+          <div class="s-date">Jan 1 – Present</div>
+        </div>
+        <div class="streak-divider"></div>
+        <div class="streak-item">
+          <div class="s-val" style="color:var(--orange)">27 🔥</div>
+          <div class="s-label">Current Streak</div>
+          <div class="s-date">May 21 – Jun 16</div>
+        </div>
+        <div class="streak-divider"></div>
+        <div class="streak-item">
+          <div class="s-val" style="color:var(--green)">45</div>
+          <div class="s-label">Longest Streak</div>
+          <div class="s-date">Feb 3 – Mar 19</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card reveal">
+      <div class="section-header"><span class="sh-icon">📅</span><h3>Contributions This Year</h3></div>
+      <div class="contrib-grid" id="contribGrid"></div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;color:var(--muted)">
+        Less
+        <div style="width:12px;height:12px;border-radius:2px;background:var(--border)"></div>
+        <div style="width:12px;height:12px;border-radius:2px;background:#0e4429"></div>
+        <div style="width:12px;height:12px;border-radius:2px;background:#006d32"></div>
+        <div style="width:12px;height:12px;border-radius:2px;background:#26a641"></div>
+        <div style="width:12px;height:12px;border-radius:2px;background:#39d353"></div>
+        More
+      </div>
+    </div>
+
+    <div class="card reveal">
+      <div class="section-header"><span class="sh-icon">💬</span><h3>Top Languages</h3></div>
+      <div class="lang-bar-track" id="langBar"></div>
+      <div class="lang-legend" id="langLegend"></div>
+    </div>
+
+    <div class="card reveal">
+      <div class="section-header"><span class="sh-icon">⏱️</span><h3>Coding Activity (WakaTime)</h3></div>
+      <div id="wakaWrap"></div>
+    </div>
+
+    <div class="card reveal">
+      <div class="section-header"><span class="sh-icon">🏆</span><h3>GitHub Trophies</h3></div>
+      <div class="trophy-grid">
+        <div class="trophy-item"><div class="t-icon">🥇</div><div class="t-name">MultiLanguage</div><div class="t-val">7 langs</div></div>
+        <div class="trophy-item"><div class="t-icon">🏅</div><div class="t-name">Commits</div><div class="t-val">1200+</div></div>
+        <div class="trophy-item"><div class="t-icon">⭐</div><div class="t-name">Stars</div><div class="t-val">847</div></div>
+        <div class="trophy-item"><div class="t-icon">🔀</div><div class="t-name">Pull Requests</div><div class="t-val">243</div></div>
+        <div class="trophy-item"><div class="t-icon">🔓</div><div class="t-name">Repos</div><div class="t-val">128</div></div>
+        <div class="trophy-item"><div class="t-icon">👥</div><div class="t-name">Followers</div><div class="t-val">340</div></div>
+        <div class="trophy-item"><div class="t-icon">🐛</div><div class="t-name">Issues</div><div class="t-val">389 closed</div></div>
+      </div>
+    </div>
+
+    <div class="card reveal" id="connect">
+      <div class="section-header"><span class="sh-icon">🌐</span><h3>Connect With Me</h3></div>
+      <div class="connect-grid">
+        <div class="connect-item ci-github"><div class="ci-icon">🐙</div><strong>GitHub</strong><div class="ci-sub">@abhishekchauhan1365</div></div>
+        <div class="connect-item ci-linkedin"><div class="ci-icon">💼</div><strong>LinkedIn</strong><div class="ci-sub">/in/abhishekchauhan</div></div>
+        <div class="connect-item ci-twitter"><div class="ci-icon">🐦</div><strong>Twitter/X</strong><div class="ci-sub">@abhishekchauhan</div></div>
+        <div class="connect-item ci-email"><div class="ci-icon">📧</div><strong>Email</strong><div class="ci-sub">Gmail</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <p>Made with ❤️ by <a href="#">Abhishek Chauhan</a> · <a href="https://github.com/abhishekchauhan1365" target="_blank">@abhishekchauhan1365</a></p>
+  <p style="margin-top:8px;font-size:11px">✨ "First, solve the problem. Then, write the code."</p>
+</footer>
+
+<div id="toast">✅ README copied to clipboard!</div>
+
+<script>
+  // Contribution Grid
+  const grid = document.getElementById('contribGrid');
+  const weights = [0.35,0.25,0.2,0.12,0.08];
+  for(let i=0;i<364;i++){
+    const cell = document.createElement('div');
+    cell.className='contrib-cell';
+    const r=Math.random(); let acc=0,v=0;
+    for(let j=0;j<weights.length;j++){ acc+=weights[j]; if(r<acc){v=j;break;} }
+    if(v) cell.setAttribute('data-v',v);
+    grid.appendChild(cell);
+  }
+
+  // Language Bar
+  const langs=[
+    {name:'Python',pct:32,color:'#3572A5'},
+    {name:'JavaScript',pct:24,color:'#f1e05a'},
+    {name:'TypeScript',pct:18,color:'#2b7489'},
+    {name:'Java',pct:12,color:'#b07219'},
+    {name:'C++',pct:8,color:'#f34b7d'},
+    {name:'HTML/CSS',pct:6,color:'#e34c26'},
+  ];
+  const bar=document.getElementById('langBar');
+  const leg=document.getElementById('langLegend');
+  langs.forEach(l=>{
+    const seg=document.createElement('div');
+    seg.className='lang-seg'; seg.style.flex=l.pct; seg.style.background=l.color;
+    bar.appendChild(seg);
+    const item=document.createElement('div');
+    item.className='lang-legend-item';
+    item.innerHTML='<div class="lang-dot" style="background:'+l.color+'"></div>'+l.name+' <span style="color:var(--text);font-weight:600;margin-left:2px">'+l.pct+'%</span>';
+    leg.appendChild(item);
+  });
+
+  // WakaTime
+  const waka=[
+    {lang:'Python',hrs:'12 hrs 30 min',pct:40,color:'#3572A5'},
+    {lang:'TypeScript',hrs:'8 hrs 12 min',pct:28,color:'#2b7489'},
+    {lang:'JavaScript',hrs:'5 hrs 48 min',pct:19,color:'#f1e05a'},
+    {lang:'Java',hrs:'3 hrs 10 min',pct:11,color:'#b07219'},
+    {lang:'Bash',hrs:'40 min',pct:2,color:'#89e051'},
+  ];
+  const ww=document.getElementById('wakaWrap');
+  waka.forEach(w=>{
+    const d=document.createElement('div');
+    d.className='waka-bar';
+    d.innerHTML='<div class="waka-top"><span>'+w.lang+'</span><span style="color:var(--muted)">'+w.hrs+'</span></div><div class="waka-track"><div class="waka-fill" style="width:'+w.pct+'%;background:'+w.color+'"></div></div>';
+    ww.appendChild(d);
+  });
+
+  // Scroll Reveal
+  const reveals=document.querySelectorAll('.reveal');
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach((e,i)=>{ if(e.isIntersecting) setTimeout(()=>e.target.classList.add('visible'),i*60); });
+  },{threshold:0.08});
+  reveals.forEach(r=>obs.observe(r));
+
+  // Copy README
+  function copyReadme(){
+    const md=`# Hi there, I'm Abhishek Chauhan 👋\n\n![Profile Views](https://komarev.com/ghpvc/?username=abhishekchauhan1365&label=Profile+Views&color=2f81f7&style=flat-square)\n\n---\n\n## 👨‍💻 About Me\n\n\`\`\`yaml\nname:     Abhishek Chauhan\nrole:     Full-Stack Developer\nlocation: India 🇮🇳\npassionate_about:\n  - Building scalable web applications\n  - Clean architecture & system design\n  - Open-source contributions\nfun_facts:\n  - Debugging > writing code 🐛\n  - Coffee-fueled late-night coder ☕\n  - Always exploring new tech stacks 🚀\n\`\`\`\n\n---\n\n## 🛠️ Tech Stack\n\n![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)\n![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)\n![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)\n![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)\n![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)\n![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)\n![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)\n![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)\n![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)\n![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)\n![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white)\n\n---\n\n## 📊 GitHub Stats\n\n<p align="center">\n  <img width="49%" src="https://github-readme-stats.vercel.app/api?username=abhishekchauhan1365&show_icons=true&theme=github_dark&hide_border=true&count_private=true" />\n  <img width="49%" src="https://github-readme-streak-stats.herokuapp.com/?user=abhishekchauhan1365&theme=github-dark-blue&hide_border=true" />\n</p>\n\n---\n\n## 🏆 Trophies\n\n![Trophies](https://github-profile-trophy.vercel.app/?username=abhishekchauhan1365&theme=algolia&no-frame=true&column=7)\n\n---\n\n## 🌐 Connect\n\n[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/abhishekchauhan1365)\n[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/abhishekchauhan1365)\n\n---\n\n<p align="center"><i>✨ "First, solve the problem. Then, write the code."</i></p>`;
+    navigator.clipboard.writeText(md).then(()=>{
+      const t=document.getElementById('toast');
+      t.style.transform='translateY(0)';
+      setTimeout(()=>t.style.transform='translateY(80px)',2800);
+    });
+  }
+</script>
+</body>
+</html>
