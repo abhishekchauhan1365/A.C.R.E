@@ -1,0 +1,12 @@
+# Dependencies — never commit these, they're installed via npm install
+node_modules/
+
+# Environment variables — NEVER commit, contains API keys and secrets
+.env
+
+# SQLite database file — this is runtime data, not source code
+acre.db
+
+# OS files
+.DS_Store
+Thumbs.db

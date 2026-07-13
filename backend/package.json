@@ -1,0 +1,25 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "A.C.R.E. Backend — Autonomous Crash Recovery Engine",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "server.js",
+  "engines": { "node": ">=20.0.0" },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@langchain/ollama": "^1.2.7",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.11.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "groq-sdk": "^1.3.0",
+    "jsonwebtoken": "^9.0.3"
+  }
+}
