@@ -6,7 +6,11 @@ node_modules/
 
 # SQLite database file — this is runtime data, not source code
 acre.db
+acre.db-shm
+acre.db-wal
+config.json
 
 # OS files
 .DS_Store
 Thumbs.db
+

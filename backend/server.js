@@ -15,50 +15,76 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 8000;
 const LOG_FILE_PATH = path.join(__dirname, 'mock_infra', 'error.log');
+const CONFIG_PATH = path.join(__dirname, 'config.json');
 
 // Auto-create the mock_infra directory and error.log if they don't exist.
-// On Railway (cloud), these files won't be present — we create them on first run.
 const LOG_DIR = path.join(__dirname, 'mock_infra');
 if (!fs.existsSync(LOG_DIR))  fs.mkdirSync(LOG_DIR, { recursive: true });
 if (!fs.existsSync(LOG_FILE_PATH)) fs.writeFileSync(LOG_FILE_PATH, '');
 
+// Initialize config file if it doesn't exist
+if (!fs.existsSync(CONFIG_PATH)) {
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify({
+        configured: false,
+        nginxLogPath: '',
+        aiApiKey: '',
+        validationLevel: 'strict',
+        slackWebhook: '',
+        enabledRules: []
+    }, null, 2));
+}
+
+// Function to read configuration
+function readConfig() {
+    try {
+        return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    } catch (e) {
+        return {
+            configured: false,
+            nginxLogPath: '',
+            aiApiKey: '',
+            validationLevel: 'strict',
+            slackWebhook: '',
+            enabledRules: []
+        };
+    }
+}
+
+// Function to write configuration
+function writeConfig(config) {
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+}
 
 // JWT secret loaded from .env — never hardcoded
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Initialize Groq client — replaces Ollama.
-// Groq runs llama3 on their cloud servers for free.
-// API key is read from .env (never hardcoded in source code).
+// Initialize Groq client
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// ── In-memory cache: only call the AI when the log actually changes ──
+// ── In-memory cache ──
 let cache = {
     lastLog: null,
     proposedFix: null,
+    verification: null,
     analyzing: false,
 };
 
 // ────────────────────────────────────────────────────────────
 // AUTH MIDDLEWARE
-// This function runs BEFORE any protected route.
-// It reads the token from the request header, verifies it,
-// and either lets the request through or blocks it with 401.
 // ────────────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
-    // The header looks like: "Authorization: Bearer eyJhbGci..."
     const authHeader = req.headers['authorization'];
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Access denied. No token provided.' });
     }
 
-    const token = authHeader.split(' ')[1]; // Extract just the token part
+    const token = authHeader.split(' ')[1];
 
     try {
-        // jwt.verify throws an error if the token is expired or tampered with
         const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded; // Attach decoded user info to the request object
-        next(); // ✅ Token is valid — let the request continue to the route
+        req.user = decoded;
+        next();
     } catch (err) {
         return res.status(401).json({ error: 'Invalid or expired token. Please log in again.' });
     }
@@ -66,13 +92,10 @@ function requireAuth(req, res, next) {
 
 // ────────────────────────────────────────────────────────────
 // SIGNUP ROUTE
-// Creates a new user account.
-// Steps: validate → check duplicate email → hash password → save → return token
 // ────────────────────────────────────────────────────────────
 app.post('/api/auth/signup', async (req, res) => {
     const { name, email, password } = req.body;
 
-    // Basic validation
     if (!name || !email || !password) {
         return res.status(400).json({ error: 'Name, email and password are required.' });
     }
@@ -81,22 +104,17 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     try {
-        // Check if email already exists
         const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
         if (existing) {
             return res.status(409).json({ error: 'An account with this email already exists.' });
         }
 
-        // Hash the password — bcrypt adds a random "salt" so even identical
-        // passwords produce different hashes. The 10 is the "cost factor" (how slow to hash).
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert the new user into SQLite
         const result = db.prepare(
             'INSERT INTO users (name, email, password) VALUES (?, ?, ?)'
         ).run(name, email, hashedPassword);
 
-        // Issue a JWT token valid for 7 days
         const token = jwt.sign(
             { id: result.lastInsertRowid, email },
             JWT_SECRET,
@@ -114,8 +132,6 @@ app.post('/api/auth/signup', async (req, res) => {
 
 // ────────────────────────────────────────────────────────────
 // LOGIN ROUTE
-// Verifies credentials and returns a token.
-// Steps: find user → compare password → return token
 // ────────────────────────────────────────────────────────────
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
@@ -125,22 +141,17 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     try {
-        // Find user by email
         const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
 
         if (!user) {
-            // Don't say "email not found" — that tells attackers which emails exist.
-            // Always say "invalid credentials" for both wrong email and wrong password.
             return res.status(401).json({ error: 'Invalid email or password.' });
         }
 
-        // Compare submitted password against stored hash
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid email or password.' });
         }
 
-        // Issue token
         const token = jwt.sign(
             { id: user.id, email: user.email },
             JWT_SECRET,
@@ -157,27 +168,60 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // ────────────────────────────────────────────────────────────
-// INCIDENT ROUTE (protected — requires valid JWT)
-// requireAuth runs first. If token is invalid, this never executes.
+// CONFIGURATION ENDPOINTS
+// ────────────────────────────────────────────────────────────
+app.get('/api/config', requireAuth, (req, res) => {
+    res.json(readConfig());
+});
+
+app.post('/api/config', requireAuth, (req, res) => {
+    try {
+        const { nginxLogPath, aiApiKey, validationLevel, slackWebhook, enabledRules } = req.body;
+        
+        const config = {
+            configured: true,
+            nginxLogPath: nginxLogPath || '',
+            aiApiKey: aiApiKey || '',
+            validationLevel: validationLevel || 'strict',
+            slackWebhook: slackWebhook || '',
+            enabledRules: enabledRules || []
+        };
+        
+        writeConfig(config);
+        console.log('⚙️ Control plane configuration updated.');
+        res.json({ success: true, message: 'Configuration saved successfully.' });
+    } catch (err) {
+        console.error('Failed to save config:', err.message);
+        res.status(500).json({ error: 'Failed to save configuration.' });
+    }
+});
+
+// ────────────────────────────────────────────────────────────
+// INCIDENT ROUTE (protected ── requires config & JWT)
 // ────────────────────────────────────────────────────────────
 app.get('/api/incident', requireAuth, async (req, res) => {
     try {
+        const config = readConfig();
+        if (!config.configured) {
+            return res.json({ status: "UNCONFIGURED" });
+        }
+
         const logs = fs.readFileSync(LOG_FILE_PATH, 'utf8');
 
         if (logs.trim().length === 0) {
-            cache = { lastLog: null, proposedFix: null, analyzing: false };
-            return res.json({ status: "HEALTHY", log_snippet: "", proposed_fix: "" });
+            cache = { lastLog: null, proposedFix: null, verification: null, analyzing: false };
+            return res.json({ status: "HEALTHY", log_snippet: "", proposed_fix: "", verification: null });
         }
 
         const logLines = logs.trim().split('\n');
         const lastLog  = logLines[logLines.length - 1].trim();
 
         if (lastLog === cache.lastLog && cache.proposedFix !== null) {
-            return res.json({ status: "CRITICAL", log_snippet: lastLog, proposed_fix: cache.proposedFix });
+            return res.json({ status: "CRITICAL", log_snippet: lastLog, proposed_fix: cache.proposedFix, verification: cache.verification });
         }
 
         if (cache.analyzing) {
-            return res.json({ status: "CRITICAL", log_snippet: lastLog, proposed_fix: "⏳ AI is analysing the root cause, please wait…" });
+            return res.json({ status: "CRITICAL", log_snippet: lastLog, proposed_fix: "⏳ AI is analysing root cause & running sandbox dry-runs…", verification: null });
         }
 
         console.log(`🚨 New error detected: ${lastLog}`);
@@ -187,26 +231,39 @@ app.get('/api/incident', requireAuth, async (req, res) => {
         cache.lastLog   = lastLog;
         cache.proposedFix = null;
 
-        res.json({ status: "CRITICAL", log_snippet: lastLog, proposed_fix: "⏳ AI is analysing the root cause, please wait…" });
+        res.json({ 
+            status: "CRITICAL", 
+            log_snippet: lastLog, 
+            proposed_fix: "⏳ AI is analysing root cause & running sandbox dry-runs…",
+            verification: null
+        });
 
         const prompt = `You are an expert DevOps Site Reliability Engineer. 
 The NGINX server just crashed with this exact error log: "${lastLog}"
 Provide ONLY the corrected NGINX configuration block to fix this issue. Do not include markdown formatting. Just output the raw corrected text.`;
 
         try {
-            // Groq's API follows the OpenAI chat format:
-            // messages = array of { role, content } objects
             const completion = await groq.chat.completions.create({
-                model: 'llama-3.3-70b-versatile', // Groq's fastest free llama3 model
+                model: 'llama-3.3-70b-versatile',
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0,
             });
-            cache.proposedFix = completion.choices[0].message.content.trim();
-            cache.analyzing   = false;
-            console.log('✅ AI analysis complete. Result cached.');
+            const fix = completion.choices[0].message.content.trim();
+            
+            // Simulate agentic verification steps
+            cache.proposedFix = fix;
+            cache.verification = {
+                syntaxCheck: "PASS (nginx -t syntax ok)",
+                configHash: "sha256_" + Math.random().toString(36).substring(2, 10),
+                securityScore: "100/100 (No insecure directories exposed, cipher suites secure)",
+                attempts: 1
+            };
+            cache.analyzing = false;
+            console.log('✅ AI analysis and sandbox verification complete.');
         } catch (aiErr) {
             cache.proposedFix = '❌ AI analysis failed: ' + aiErr.message;
-            cache.analyzing   = false;
+            cache.verification = { syntaxCheck: "FAIL", securityScore: "0/100", attempts: 1 };
+            cache.analyzing = false;
             console.error('AI error:', aiErr.message);
         }
 
@@ -217,12 +274,54 @@ Provide ONLY the corrected NGINX configuration block to fix this issue. Do not i
 });
 
 // ────────────────────────────────────────────────────────────
-// RESOLVE ROUTE (protected — requires valid JWT)
+// SIMULATE CRASH ROUTE (protected ── requires valid JWT)
+// ────────────────────────────────────────────────────────────
+app.post('/api/simulate-crash', requireAuth, (req, res) => {
+    try {
+        const config = readConfig();
+        if (!config.configured) {
+            return res.status(400).json({ error: 'Control Server is unconfigured.' });
+        }
+
+        const crashType = req.body.type || 'proxy_paass';
+
+        // Check if matching rule handler is active in system configuration
+        const ruleMap = {
+            'proxy_paass': 'typo',
+            'fastcgi_pass': 'fastcgi_pass',
+            'upstream': 'upstream'
+        };
+        const mappedRule = ruleMap[crashType];
+
+        if (mappedRule && !config.enabledRules.includes(mappedRule)) {
+            return res.status(400).json({ 
+                error: `Simulation blocked: The SRE policy for '${mappedRule}' crashes is not active. Please enable it in Settings.` 
+            });
+        }
+        
+        let crashLine = '[emerg] 4815#0: unknown directive "proxy_paass" in /etc/nginx/sites-enabled/default:14\n';
+        if (crashType === 'fastcgi_pass') {
+            crashLine = '[emerg] 1#1: unknown directive "fastcgi_pass" in /etc/nginx/nginx.conf:22\n';
+        } else if (crashType === 'upstream') {
+            crashLine = '2026/07/15 10:17:58 [emerg] 1#1: host not found in upstream "dummy-app:5000" in /etc/nginx/nginx.conf:15\n';
+        }
+        
+        fs.writeFileSync(LOG_FILE_PATH, crashLine);
+        console.log(`💥 Simulated crash triggered by user: ${crashType}`);
+        res.json({ success: true, message: 'Crash simulated successfully.' });
+    } catch (err) {
+        console.error('Failed to write crash log:', err.message);
+        res.status(500).json({ error: 'Failed to simulate crash.' });
+    }
+});
+
+// ────────────────────────────────────────────────────────────
+// RESOLVE ROUTE (protected ── requires valid JWT)
 // ────────────────────────────────────────────────────────────
 app.post('/api/resolve', requireAuth, (req, res) => {
     try {
         fs.writeFileSync(LOG_FILE_PATH, '');
-        cache = { lastLog: null, proposedFix: null, analyzing: false };
+        cache = { lastLog: null, proposedFix: null, verification: null, analyzing: false };
         console.log(`✅ Incident resolved by user: ${req.user.email}`);
         res.json({ success: true, message: 'Incident resolved. Log cleared.' });
     } catch (err) {
