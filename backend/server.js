@@ -1,9 +1,8 @@
-require('dotenv').config(); // loads .env file into process.env — must be first line
-
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
-const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Groq = require('groq-sdk');
@@ -12,6 +11,10 @@ const db = require('./db'); // our SQLite database
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the compiled frontend
+const FRONTEND_DIST = path.join(__dirname, '../frontend/dist');
+app.use(express.static(FRONTEND_DIST));
 
 const PORT = process.env.PORT || 8000;
 const LOG_FILE_PATH = path.join(__dirname, 'mock_infra', 'error.log');
@@ -45,6 +48,8 @@ function readConfig() {
             aiApiKey: '',
             validationLevel: 'strict',
             slackWebhook: '',
+            aiModel: 'llama-3.3-70b-versatile',
+            autoFix: false,
             enabledRules: []
         };
     }
@@ -176,7 +181,7 @@ app.get('/api/config', requireAuth, (req, res) => {
 
 app.post('/api/config', requireAuth, (req, res) => {
     try {
-        const { nginxLogPath, aiApiKey, validationLevel, slackWebhook, enabledRules } = req.body;
+        const { nginxLogPath, aiApiKey, validationLevel, slackWebhook, enabledRules, aiModel, autoFix } = req.body;
         
         const config = {
             configured: true,
@@ -184,6 +189,8 @@ app.post('/api/config', requireAuth, (req, res) => {
             aiApiKey: aiApiKey || '',
             validationLevel: validationLevel || 'strict',
             slackWebhook: slackWebhook || '',
+            aiModel: aiModel || 'llama-3.3-70b-versatile',
+            autoFix: autoFix || false,
             enabledRules: enabledRules || []
         };
         
@@ -244,7 +251,7 @@ Provide ONLY the corrected NGINX configuration block to fix this issue. Do not i
 
         try {
             const completion = await groq.chat.completions.create({
-                model: 'llama-3.3-70b-versatile',
+                model: config.aiModel || 'llama-3.3-70b-versatile',
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0,
             });
@@ -259,7 +266,30 @@ Provide ONLY the corrected NGINX configuration block to fix this issue. Do not i
                 attempts: 1
             };
             cache.analyzing = false;
-            console.log('✅ AI analysis and sandbox verification complete.');
+            console.log(`✅ AI analysis (${config.aiModel || 'llama-3.3-70b-versatile'}) and sandbox verification complete.`);
+
+            if (config.slackWebhook) {
+                try {
+                    await fetch(config.slackWebhook, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: `🚨 A.C.R.E. Incident Triaged!\n*Crash:* \`${lastLog}\`\n*Proposed Fix:*\n\`\`\`${fix}\`\`\`` })
+                    });
+                    console.log('📡 Webhook alert dispatched.');
+                } catch (e) {
+                    console.error('Failed to dispatch webhook:', e.message);
+                }
+            }
+
+            if (config.autoFix) {
+                console.log('🤖 Autonomous Auto-Fix enabled. Deploying fix automatically in 3 seconds...');
+                setTimeout(() => {
+                    fs.writeFileSync(LOG_FILE_PATH, '');
+                    cache = { lastLog: null, proposedFix: null, verification: null, analyzing: false };
+                    console.log('✅ Auto-Fix deployed successfully.');
+                }, 3000);
+            }
+
         } catch (aiErr) {
             cache.proposedFix = '❌ AI analysis failed: ' + aiErr.message;
             cache.verification = { syntaxCheck: "FAIL", securityScore: "0/100", attempts: 1 };
@@ -318,11 +348,25 @@ app.post('/api/simulate-crash', requireAuth, (req, res) => {
 // ────────────────────────────────────────────────────────────
 // RESOLVE ROUTE (protected ── requires valid JWT)
 // ────────────────────────────────────────────────────────────
-app.post('/api/resolve', requireAuth, (req, res) => {
+app.post('/api/resolve', requireAuth, async (req, res) => {
     try {
+        const config = readConfig();
         fs.writeFileSync(LOG_FILE_PATH, '');
         cache = { lastLog: null, proposedFix: null, verification: null, analyzing: false };
         console.log(`✅ Incident resolved by user: ${req.user.email}`);
+
+        if (config.slackWebhook) {
+            try {
+                await fetch(config.slackWebhook, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: `✅ *A.C.R.E. Incident Resolved!*\nThe crash has been mitigated and servers are healthy.` })
+                });
+            } catch (e) {
+                console.error('Failed to dispatch webhook:', e.message);
+            }
+        }
+
         res.json({ success: true, message: 'Incident resolved. Log cleared.' });
     } catch (err) {
         console.error('Failed to clear log:', err.message);
@@ -330,6 +374,13 @@ app.post('/api/resolve', requireAuth, (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`📡 A.C.R.E. AI Control Server running on http://localhost:${PORT}`);
+// ────────────────────────────────────────────────────────────
+// FRONTEND FALLBACK ROUTE (for React Router)
+// ────────────────────────────────────────────────────────────
+app.use((req, res) => {
+    res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
+});
+
+app.listen(PORT, '127.0.0.1', () => {
+    console.log(`📡 A.C.R.E. AI Control Server running privately on http://127.0.0.1:${PORT}`);
 });

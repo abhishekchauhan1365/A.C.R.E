@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Cpu, AlertCircle, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 
-function SignupPage() {
+export default function SignupPage() {
     const [name, setName]               = useState('');
     const [email, setEmail]             = useState('');
     const [password, setPassword]       = useState('');
@@ -41,104 +42,176 @@ function SignupPage() {
         setLoading(false);
     };
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1, delayChildren: 0.2 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 15, filter: 'blur(4px)' },
+        show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
+    };
+
     return (
-        <div className="auth-split">
-            {/* ── Left Pane (Marketing/Brand) ── */}
-            <div className="auth-left">
-                <div className="auth-left-content animate-fade-up">
-                    <div className="auth-left-brand" onClick={() => navigate('/')}>
-                        <Cpu />
+        <div className="min-h-screen flex font-sans antialiased bg-[#F5F4F0] text-[#111]">
+            
+            {/* Left Pane - Branding */}
+            <div className="hidden lg:flex w-1/2 bg-[#111] text-[#F5F4F0] p-12 flex-col justify-between relative overflow-hidden">
+                {/* Animated Noise Overlay */}
+                <div 
+                    className="absolute inset-0 pointer-events-none z-10 opacity-[0.03] mix-blend-overlay" 
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}
+                />
+                
+                <div className="absolute inset-0 z-0 opacity-[0.1]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+
+                <div className="relative z-20">
+                    <Link to="/" className="inline-block font-pixel text-sm tracking-[0.25em] text-white/80 hover:text-white transition-colors">
                         A.C.R.E.
-                    </div>
-                    <h1 className="auth-left-title">
+                    </Link>
+                </div>
+
+                <div className="relative z-20 max-w-lg">
+                    <motion.h1 
+                        className="text-5xl font-light tracking-tighter mb-6 leading-[1.05]"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                    >
                         Secure your infrastructure.
-                    </h1>
-                    <p className="auth-left-desc">
+                    </motion.h1>
+                    <motion.p 
+                        className="text-[14px] text-white/50 leading-[1.8] max-w-[40ch]"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                    >
                         Join top engineering teams who trust A.C.R.E. to monitor, diagnose, and auto-remediate infrastructure crashes in real-time.
-                    </p>
+                    </motion.p>
+                </div>
+                
+                <div className="relative z-20">
+                    <div className="text-[10px] uppercase tracking-widest text-white/30 font-medium">Deterministic SRE Platform</div>
                 </div>
             </div>
 
-            {/* ── Right Pane (Auth Form) ── */}
-            <div className="auth-right">
-                <div className="auth-card animate-fade-up delay-2">
-                    
-                    <div className="auth-mobile-brand" onClick={() => navigate('/')}>
-                        <Cpu size={24} /> A.C.R.E.
-                    </div>
+            {/* Right Pane - Auth Form */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative">
+                
+                {/* Mobile Branding */}
+                <div className="absolute top-8 left-8 lg:hidden">
+                    <Link to="/" className="font-pixel text-xs tracking-[0.25em] text-black/80 hover:text-black">
+                        A.C.R.E.
+                    </Link>
+                </div>
 
-                    <h2 className="auth-title">Create account</h2>
-                    <p className="auth-subtitle">Get started with autonomous infrastructure today</p>
+                <motion.div 
+                    className="w-full max-w-md"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="show"
+                >
+                    <motion.div variants={itemVariants} className="mb-10">
+                        <h2 className="text-3xl font-light tracking-tight mb-2">Create account</h2>
+                        <p className="text-[13px] text-black/50">Get started with autonomous infrastructure today.</p>
+                    </motion.div>
 
                     {error && (
-                        <div className="auth-error animate-fade-up">
-                            <AlertCircle size={16} /> {error}
-                        </div>
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-[13px] font-medium"
+                        >
+                            {error}
+                        </motion.div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="auth-form">
-                        <div className="form-group">
-                            <label htmlFor="name">Full name</label>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <motion.div variants={itemVariants}>
+                            <label className="block text-[11px] uppercase tracking-widest font-medium text-black/50 mb-2" htmlFor="name">
+                                Full Name
+                            </label>
                             <input
                                 id="name"
                                 type="text"
                                 placeholder="Sarah Connor"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl bg-white border border-black/10 focus:border-black/30 focus:ring-4 focus:ring-black/5 outline-none transition-all text-[14px] placeholder:text-black/30 shadow-sm"
                                 required
                                 autoFocus
                             />
-                        </div>
+                        </motion.div>
 
-                        <div className="form-group">
-                            <label htmlFor="email">Email address</label>
+                        <motion.div variants={itemVariants}>
+                            <label className="block text-[11px] uppercase tracking-widest font-medium text-black/50 mb-2" htmlFor="email">
+                                Email Address
+                            </label>
                             <input
                                 id="email"
                                 type="email"
                                 placeholder="name@company.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl bg-white border border-black/10 focus:border-black/30 focus:ring-4 focus:ring-black/5 outline-none transition-all text-[14px] placeholder:text-black/30 shadow-sm"
                                 required
                             />
+                        </motion.div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <motion.div variants={itemVariants}>
+                                <label className="block text-[11px] uppercase tracking-widest font-medium text-black/50 mb-2" htmlFor="password">
+                                    Password
+                                </label>
+                                <input
+                                    id="password"
+                                    type="password"
+                                    placeholder="Min. 6 chars"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl bg-white border border-black/10 focus:border-black/30 focus:ring-4 focus:ring-black/5 outline-none transition-all text-[14px] placeholder:text-black/30 shadow-sm"
+                                    required
+                                />
+                            </motion.div>
+
+                            <motion.div variants={itemVariants}>
+                                <label className="block text-[11px] uppercase tracking-widest font-medium text-black/50 mb-2" htmlFor="confirm">
+                                    Confirm
+                                </label>
+                                <input
+                                    id="confirm"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={confirm}
+                                    onChange={(e) => setConfirm(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-xl bg-white border border-black/10 focus:border-black/30 focus:ring-4 focus:ring-black/5 outline-none transition-all text-[14px] placeholder:text-black/30 shadow-sm"
+                                    required
+                                />
+                            </motion.div>
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="password">Password</label>
-                            <input
-                                id="password"
-                                type="password"
-                                placeholder="Min. 6 characters"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="confirm">Confirm password</label>
-                            <input
-                                id="confirm"
-                                type="password"
-                                placeholder="••••••••"
-                                value={confirm}
-                                onChange={(e) => setConfirm(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <button type="submit" className="btn-auth" disabled={loading}>
-                            {loading ? <Loader2 size={16} className="spin-icon" /> : 'Create account'}
-                        </button>
+                        <motion.div variants={itemVariants} className="pt-4">
+                            <button 
+                                type="submit" 
+                                disabled={loading}
+                                className="w-full flex justify-center items-center py-3.5 rounded-xl bg-[#111] text-white text-[12px] uppercase tracking-widest font-medium hover:bg-black/90 transition-all active:scale-[0.98] shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                {loading ? <Loader2 size={16} className="animate-spin" /> : 'Create Account'}
+                            </button>
+                        </motion.div>
                     </form>
 
-                    <p className="auth-switch">
-                        Already have an account? 
-                        <Link to="/login">Sign in here</Link>
-                    </p>
-                </div>
+                    <motion.p variants={itemVariants} className="mt-8 text-center text-[13px] text-black/50">
+                        Already have an account?{' '}
+                        <Link to="/login" className="text-black font-medium hover:underline underline-offset-4">
+                            Sign in here
+                        </Link>
+                    </motion.p>
+                </motion.div>
             </div>
         </div>
     );
 }
-
-export default SignupPage;

@@ -1,0 +1,50 @@
+{
+  "name": "acre-ai",
+  "version": "1.0.2",
+  "description": "Cross-platform AI incident monitoring and risk-gated remediation from your terminal.",
+  "main": "lib/index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "frontend/dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "acre-ai": "bin/acre.js"
+  },
+  "scripts": {
+    "start": "node ./bin/acre.js start",
+    "test": "node --test test/**/*.test.js",
+    "lint": "node --check bin/acre.js && node --check lib/index.js && node --check lib/config-store.js && node --check lib/plugins.js && node --check lib/ai-engine.js && node --check lib/daemon.js && node --check lib/control-server.js",
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "build": "npm run build:frontend"
+  },
+  "author": "A.C.R.E. Team",
+  "license": "MIT",
+  "homepage": "https://www.npmjs.com/package/acre-ai",
+  "keywords": [
+    "sre",
+    "devops",
+    "ai",
+    "llm",
+    "monitoring",
+    "incident-management",
+    "log-monitoring",
+    "cli",
+    "groq",
+    "cross-platform",
+    "automation",
+    "nginx",
+    "llama3",
+    "mixtral"
+  ],
+  "dependencies": {
+    "groq-sdk": "^0.3.2",
+    "chokidar": "^4.0.3",
+    "commander": "^13.0.0"
+  }
+}
