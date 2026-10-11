@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -28,7 +28,7 @@ export default function SignupPage() {
         setLoading(true);
 
         try {
-            const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            const API = import.meta.env.VITE_API_URL || '';
             const res = await axios.post(`${API}/api/auth/signup`, { name, email, password });
 
             localStorage.setItem('acre_token', res.data.token);

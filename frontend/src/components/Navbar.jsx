@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Cpu, Menu, X, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
@@ -29,8 +29,8 @@ function Navbar() {
                 >
                     {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                 </button>
-                <button className="btn-ent hide-mobile" onClick={() => navigate('/login')}>Log In</button>
-                <button className="btn-ent primary hide-mobile" onClick={() => navigate('/signup')}>Get Started</button>
+                <button className="btn-ent hide-mobile" onClick={() => navigate('/dashboard')}>Open Dashboard</button>
+                <button className="btn-ent primary hide-mobile" onClick={() => navigate('/dashboard')}>Get Started</button>
                 
                 <button 
                     className="btn-ent icon-only show-mobile" 

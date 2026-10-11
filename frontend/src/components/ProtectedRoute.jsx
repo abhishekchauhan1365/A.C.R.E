@@ -13,11 +13,13 @@ import { Navigate } from 'react-router-dom';
 //   } />
 function ProtectedRoute({ children }) {
     const token = localStorage.getItem('acre_token');
+    const isLocalDaemon = typeof window !== 'undefined' && window.location.port === '4310';
+
+    if (isLocalDaemon) {
+        return children;
+    }
 
     if (!token) {
-        // <Navigate> is React Router's way of redirecting programmatically.
-        // replace={true} means the /dashboard URL gets replaced in browser history,
-        // so pressing "Back" after redirect doesn't loop back to /dashboard.
         return <Navigate to="/login" replace />;
     }
 

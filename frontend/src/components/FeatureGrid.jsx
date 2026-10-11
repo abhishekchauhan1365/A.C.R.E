@@ -1,4 +1,3 @@
-import React from 'react';
 import { Activity, ShieldCheck, Zap } from 'lucide-react';
 
 function FeatureGrid() {

@@ -21,6 +21,28 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS projects (
+    id TEXT PRIMARY KEY,
+    userId INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    platform TEXT NOT NULL,
+    logPath TEXT NOT NULL,
+    projectRoot TEXT NOT NULL,
+    framework TEXT NOT NULL,
+    autoFix INTEGER NOT NULL DEFAULT 0,
+    createdAt TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY(userId) REFERENCES users(id)
+  );
+  CREATE TABLE IF NOT EXISTS user_settings (
+    userId INTEGER PRIMARY KEY,
+    aiModel TEXT NOT NULL DEFAULT '',
+    autoFix INTEGER NOT NULL DEFAULT 0,
+    slackWebhook TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY(userId) REFERENCES users(id)
+  );
+`);
+
 console.log('📦 SQLite database ready (acre.db)');
 
 // Export db so server.js can use it to INSERT and SELECT users

@@ -14,6 +14,21 @@ A.C.R.E. watches the logs you choose, captures incident context, uses Groq-power
 npm install -g acre-ai
 ```
 
+## Run the website locally
+
+The website is a separate local control-server application with account signup, login, and a SQLite user store. It is not required by the npm CLI.
+
+```bash
+cd backend
+copy .env.example .env
+# Set a long, random JWT_SECRET in .env (and optionally GROQ_API_KEY)
+npm install
+cd ../frontend && npm install && npm run build
+cd ../backend && npm start
+```
+
+Open `http://127.0.0.1:8000`, create an account, and sign in. For frontend development, run `npm run dev` inside `frontend`; Vite proxies `/api` requests to the backend.
+
 ## Quick start
 
 ```bash
@@ -32,6 +47,8 @@ acre-ai dashboard
 ```
 
 It displays the daemon's real projects, incidents, log context, AI recommendations, system metrics, and remediation-plan approvals at `http://127.0.0.1:4310`.
+
+For a detected incident, the dashboard can generate a bounded source patch, show the exact search/replace diff, apply it only after the local user reviews it, validate it with an optional project command, and roll it back from a local backup. Patch targets are restricted to the configured project root; secrets, dependencies, lockfiles, and deployment configuration are blocked.
 
 ## What it does
 

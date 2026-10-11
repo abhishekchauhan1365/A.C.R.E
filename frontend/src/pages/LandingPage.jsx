@@ -580,9 +580,8 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <span className="font-pixel text-sm tracking-[0.25em] text-white/80">A.C.R.E.</span>
           <div className="flex items-center gap-8 text-[11px] font-medium tracking-widest uppercase">
-            <a href="#" className="hover:text-white transition-colors">Documentation</a>
-            <a href="#" className="hover:text-white transition-colors">GitHub</a>
-            <a href="#" className="hover:text-white transition-colors">Status</a>
+            <a href="https://github.com/abhishekchauhan1365/A.C.R.E#readme" className="hover:text-white transition-colors">Documentation</a>
+            <a href="https://github.com/abhishekchauhan1365/A.C.R.E" className="hover:text-white transition-colors">GitHub</a>
           </div>
         </div>
       </footer>

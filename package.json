@@ -1,6 +1,6 @@
 {
   "name": "acre-ai",
-  "version": "1.0.2",
+  "version": "1.1.2",
   "description": "Cross-platform AI incident monitoring and risk-gated remediation from your terminal.",
   "main": "lib/index.js",
   "engines": {
@@ -18,10 +18,12 @@
   },
   "scripts": {
     "start": "node ./bin/acre.js start",
-    "test": "node --test test/**/*.test.js",
-    "lint": "node --check bin/acre.js && node --check lib/index.js && node --check lib/config-store.js && node --check lib/plugins.js && node --check lib/ai-engine.js && node --check lib/daemon.js && node --check lib/control-server.js",
+    "test": "node --test test/*.test.js",
+    "lint": "node --check bin/acre.js && node --check lib/index.js && node --check lib/config-store.js && node --check lib/plugins.js && node --check lib/ai-engine.js && node --check lib/patch-engine.js && node --check lib/daemon.js && node --check lib/control-server.js",
     "build:frontend": "cd frontend && npm install && npm run build",
-    "build": "npm run build:frontend"
+    "build": "npm run build:frontend",
+    "start:web": "npm --prefix backend start",
+    "test:web": "npm --prefix backend test"
   },
   "author": "A.C.R.E. Team",
   "license": "MIT",
@@ -43,8 +45,9 @@
     "mixtral"
   ],
   "dependencies": {
-    "groq-sdk": "^0.3.2",
     "chokidar": "^4.0.3",
-    "commander": "^13.0.0"
+    "commander": "^13.0.0",
+    "groq-sdk": "^0.3.2",
+    "ws": "^8.21.3"
   }
 }

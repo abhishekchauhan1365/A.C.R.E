@@ -1,3 +1,4 @@
+const os = require('os');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
@@ -7,9 +8,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Groq = require('groq-sdk');
 const db = require('./db'); // our SQLite database
+const { proposePatch } = require('../lib/ai-engine');
+const patchEngine = require('../lib/patch-engine');
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : true }));
 app.use(express.json());
 
 // Serve static files from the compiled frontend
@@ -17,62 +20,18 @@ const FRONTEND_DIST = path.join(__dirname, '../frontend/dist');
 app.use(express.static(FRONTEND_DIST));
 
 const PORT = process.env.PORT || 8000;
-const LOG_FILE_PATH = path.join(__dirname, 'mock_infra', 'error.log');
-const CONFIG_PATH = path.join(__dirname, 'config.json');
-
-// Auto-create the mock_infra directory and error.log if they don't exist.
-const LOG_DIR = path.join(__dirname, 'mock_infra');
-if (!fs.existsSync(LOG_DIR))  fs.mkdirSync(LOG_DIR, { recursive: true });
-if (!fs.existsSync(LOG_FILE_PATH)) fs.writeFileSync(LOG_FILE_PATH, '');
-
-// Initialize config file if it doesn't exist
-if (!fs.existsSync(CONFIG_PATH)) {
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify({
-        configured: false,
-        nginxLogPath: '',
-        aiApiKey: '',
-        validationLevel: 'strict',
-        slackWebhook: '',
-        enabledRules: []
-    }, null, 2));
-}
-
-// Function to read configuration
-function readConfig() {
-    try {
-        return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-    } catch (e) {
-        return {
-            configured: false,
-            nginxLogPath: '',
-            aiApiKey: '',
-            validationLevel: 'strict',
-            slackWebhook: '',
-            aiModel: 'llama-3.3-70b-versatile',
-            autoFix: false,
-            enabledRules: []
-        };
-    }
-}
-
-// Function to write configuration
-function writeConfig(config) {
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-}
+const { getConfig, saveConfig, getState, saveState, encrypt } = require('../lib/config-store');
+const { start: startDaemon } = require('../lib/daemon');
+let daemonHandle = null;
 
 // JWT secret loaded from .env — never hardcoded
 const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET || JWT_SECRET === 'replace_with_a_long_random_secret') {
+    throw new Error('JWT_SECRET must be set to a secure value before starting the server.');
+}
 
-// Initialize Groq client
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
-// ── In-memory cache ──
-let cache = {
-    lastLog: null,
-    proposedFix: null,
-    verification: null,
-    analyzing: false,
-};
+// AI analysis is opt-in. Never embed service credentials in source code.
+const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
 
 // ────────────────────────────────────────────────────────────
 // AUTH MIDDLEWARE
@@ -172,176 +131,143 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+app.get('/api/auth/me', requireAuth, (req, res) => {
+    const user = db.prepare('SELECT id, name, email, createdAt FROM users WHERE id = ?').get(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    res.json({ user });
+});
+
 // ────────────────────────────────────────────────────────────
 // CONFIGURATION ENDPOINTS
 // ────────────────────────────────────────────────────────────
 app.get('/api/config', requireAuth, (req, res) => {
-    res.json(readConfig());
+    res.json(getConfig());
 });
 
-app.post('/api/config', requireAuth, (req, res) => {
+app.post('/api/config', requireAuth, async (req, res) => {
     try {
-        const { nginxLogPath, aiApiKey, validationLevel, slackWebhook, enabledRules, aiModel, autoFix } = req.body;
-        
-        const config = {
-            configured: true,
-            nginxLogPath: nginxLogPath || '',
-            aiApiKey: aiApiKey || '',
-            validationLevel: validationLevel || 'strict',
-            slackWebhook: slackWebhook || '',
-            aiModel: aiModel || 'llama-3.3-70b-versatile',
-            autoFix: autoFix || false,
-            enabledRules: enabledRules || []
+        const { projectName, logPath, projectRoot, framework, aiApiKey, aiModel, autoFix, slackWebhook } = req.body;
+        if (!logPath || !path.isAbsolute(logPath)) return res.status(400).json({ error: 'Log path must be an absolute path.' });
+        if (!projectRoot || !path.isAbsolute(projectRoot)) return res.status(400).json({ error: 'Project root must be an absolute path.' });
+        const config = getConfig();
+        config.configured = true;
+        const project = { id: `web-${Date.now()}`, name: projectName || 'Monitored service', platform: process.platform, logPath, projectRoot, framework: framework || 'generic', restartCommand: '', validateCommand: '', autoFix: Boolean(autoFix), allowCodePatches: false, createdAt: new Date().toISOString() };
+        db.prepare('DELETE FROM projects WHERE userId = ?').run(req.user.id);
+        db.prepare('INSERT INTO projects (id, userId, name, platform, logPath, projectRoot, framework, autoFix) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(project.id, req.user.id, project.name, project.platform, project.logPath, project.projectRoot, project.framework, Number(project.autoFix));
+        db.prepare('INSERT INTO user_settings (userId, aiModel, autoFix, slackWebhook) VALUES (?, ?, ?, ?) ON CONFLICT(userId) DO UPDATE SET aiModel = excluded.aiModel, autoFix = excluded.autoFix, slackWebhook = excluded.slackWebhook').run(req.user.id, aiModel || 'llama-3.3-70b-versatile', Number(autoFix), slackWebhook || '');
+        config.projects = [...(config.projects || []).filter(item => item.logPath !== logPath), project];
+        config.settings = {
+            ...config.settings,
+            aiModel: aiModel || config.settings?.aiModel || 'llama-3.3-70b-versatile',
+            autoFix: Boolean(autoFix),
+            notifications: { ...config.settings?.notifications, slack: slackWebhook || '' }
         };
+        if (aiApiKey) config.secrets = { ...config.secrets, groqApiKey: encrypt(aiApiKey) };
         
-        writeConfig(config);
+        saveConfig(config);
+        if (daemonHandle) await daemonHandle.stop();
+        daemonHandle = startDaemon({ foreground: false });
         console.log('⚙️ Control plane configuration updated.');
-        res.json({ success: true, message: 'Configuration saved successfully.' });
+        res.json({ success: true, project, message: 'Configuration saved and monitoring has started.' });
     } catch (err) {
         console.error('Failed to save config:', err.message);
         res.status(500).json({ error: 'Failed to save configuration.' });
     }
 });
 
+function findIncident(id) {
+    const state = getState();
+    const incident = state.incidents.find(item => item.id === id);
+    if (!incident) throw new Error('Incident not found.');
+    const config = getConfig();
+    let project = config.projects.find(item => item.id === incident.projectId);
+    if (!project) {
+        const row = db.prepare('SELECT id, name, platform, logPath, projectRoot, framework, autoFix FROM projects WHERE id = ?').get(incident.projectId);
+        if (row) project = { ...row, autoFix: Boolean(row.autoFix) };
+    }
+    if (!project) throw new Error('The incident project is no longer configured.');
+    return { state, incident, config, project };
+}
+
+function saveEvent(state, event) {
+    state.events.unshift({ at: new Date().toISOString(), ...event });
+    state.events = state.events.slice(0, 500);
+}
+
 // ────────────────────────────────────────────────────────────
-// INCIDENT ROUTE (protected ── requires config & JWT)
+// INCIDENT REMEDIATION & PATCH ENDPOINTS (protected ── requires valid JWT)
 // ────────────────────────────────────────────────────────────
-app.get('/api/incident', requireAuth, async (req, res) => {
+app.post('/api/v1/incidents/:id/approve', requireAuth, async (req, res) => {
     try {
-        const config = readConfig();
-        if (!config.configured) {
-            return res.json({ status: "UNCONFIGURED" });
-        }
-
-        const logs = fs.readFileSync(LOG_FILE_PATH, 'utf8');
-
-        if (logs.trim().length === 0) {
-            cache = { lastLog: null, proposedFix: null, verification: null, analyzing: false };
-            return res.json({ status: "HEALTHY", log_snippet: "", proposed_fix: "", verification: null });
-        }
-
-        const logLines = logs.trim().split('\n');
-        const lastLog  = logLines[logLines.length - 1].trim();
-
-        if (lastLog === cache.lastLog && cache.proposedFix !== null) {
-            return res.json({ status: "CRITICAL", log_snippet: lastLog, proposed_fix: cache.proposedFix, verification: cache.verification });
-        }
-
-        if (cache.analyzing) {
-            return res.json({ status: "CRITICAL", log_snippet: lastLog, proposed_fix: "⏳ AI is analysing root cause & running sandbox dry-runs…", verification: null });
-        }
-
-        console.log(`🚨 New error detected: ${lastLog}`);
-        console.log("🤖 AI is analysing the root cause… (will cache result)");
-
-        cache.analyzing = true;
-        cache.lastLog   = lastLog;
-        cache.proposedFix = null;
-
-        res.json({ 
-            status: "CRITICAL", 
-            log_snippet: lastLog, 
-            proposed_fix: "⏳ AI is analysing root cause & running sandbox dry-runs…",
-            verification: null
+        const { state, incident } = findIncident(req.params.id);
+        incident.status = 'approved';
+        incident.approvedAt = new Date().toISOString();
+        saveEvent(state, {
+            type: 'plan-approved',
+            project: incident.project,
+            message: `Remediation plan for incident ${incident.id} approved by ${req.user.email}.`
         });
-
-        const prompt = `You are an expert DevOps Site Reliability Engineer. 
-The NGINX server just crashed with this exact error log: "${lastLog}"
-Provide ONLY the corrected NGINX configuration block to fix this issue. Do not include markdown formatting. Just output the raw corrected text.`;
-
-        try {
-            const completion = await groq.chat.completions.create({
-                model: config.aiModel || 'llama-3.3-70b-versatile',
-                messages: [{ role: 'user', content: prompt }],
-                temperature: 0,
-            });
-            const fix = completion.choices[0].message.content.trim();
-            
-            // Simulate agentic verification steps
-            cache.proposedFix = fix;
-            cache.verification = {
-                syntaxCheck: "PASS (nginx -t syntax ok)",
-                configHash: "sha256_" + Math.random().toString(36).substring(2, 10),
-                securityScore: "100/100 (No insecure directories exposed, cipher suites secure)",
-                attempts: 1
-            };
-            cache.analyzing = false;
-            console.log(`✅ AI analysis (${config.aiModel || 'llama-3.3-70b-versatile'}) and sandbox verification complete.`);
-
-            if (config.slackWebhook) {
-                try {
-                    await fetch(config.slackWebhook, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: `🚨 A.C.R.E. Incident Triaged!\n*Crash:* \`${lastLog}\`\n*Proposed Fix:*\n\`\`\`${fix}\`\`\`` })
-                    });
-                    console.log('📡 Webhook alert dispatched.');
-                } catch (e) {
-                    console.error('Failed to dispatch webhook:', e.message);
-                }
-            }
-
-            if (config.autoFix) {
-                console.log('🤖 Autonomous Auto-Fix enabled. Deploying fix automatically in 3 seconds...');
-                setTimeout(() => {
-                    fs.writeFileSync(LOG_FILE_PATH, '');
-                    cache = { lastLog: null, proposedFix: null, verification: null, analyzing: false };
-                    console.log('✅ Auto-Fix deployed successfully.');
-                }, 3000);
-            }
-
-        } catch (aiErr) {
-            cache.proposedFix = '❌ AI analysis failed: ' + aiErr.message;
-            cache.verification = { syntaxCheck: "FAIL", securityScore: "0/100", attempts: 1 };
-            cache.analyzing = false;
-            console.error('AI error:', aiErr.message);
-        }
-
+        saveState(state);
+        res.json({ success: true, incident, message: 'Plan approved. Source-code changes still require explicit patch application.' });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Server crashed while reading logs or contacting AI." });
+        res.status(404).json({ error: err.message });
     }
 });
 
-// ────────────────────────────────────────────────────────────
-// SIMULATE CRASH ROUTE (protected ── requires valid JWT)
-// ────────────────────────────────────────────────────────────
-app.post('/api/simulate-crash', requireAuth, (req, res) => {
+app.post('/api/v1/incidents/:id/patch', requireAuth, async (req, res) => {
     try {
-        const config = readConfig();
-        if (!config.configured) {
-            return res.status(400).json({ error: 'Control Server is unconfigured.' });
+        const { state, incident, config, project } = findIncident(req.params.id);
+        if (!project.projectRoot) project.projectRoot = patchEngine.projectRoot(project);
+        const proposal = await proposePatch({ project, incident, config });
+        if (!proposal.changes.length) {
+            return res.status(422).json({ error: proposal.summary || 'No safe patch could be generated.' });
         }
-
-        const crashType = req.body.type || 'proxy_paass';
-
-        // Check if matching rule handler is active in system configuration
-        const ruleMap = {
-            'proxy_paass': 'typo',
-            'fastcgi_pass': 'fastcgi_pass',
-            'upstream': 'upstream'
-        };
-        const mappedRule = ruleMap[crashType];
-
-        if (mappedRule && !config.enabledRules.includes(mappedRule)) {
-            return res.status(400).json({ 
-                error: `Simulation blocked: The SRE policy for '${mappedRule}' crashes is not active. Please enable it in Settings.` 
-            });
-        }
-        
-        let crashLine = '[emerg] 4815#0: unknown directive "proxy_paass" in /etc/nginx/sites-enabled/default:14\n';
-        if (crashType === 'fastcgi_pass') {
-            crashLine = '[emerg] 1#1: unknown directive "fastcgi_pass" in /etc/nginx/nginx.conf:22\n';
-        } else if (crashType === 'upstream') {
-            crashLine = '2026/07/15 10:17:58 [emerg] 1#1: host not found in upstream "dummy-app:5000" in /etc/nginx/nginx.conf:15\n';
-        }
-        
-        fs.writeFileSync(LOG_FILE_PATH, crashLine);
-        console.log(`💥 Simulated crash triggered by user: ${crashType}`);
-        res.json({ success: true, message: 'Crash simulated successfully.' });
+        const checked = patchEngine.preview(project, proposal.changes);
+        incident.patch = { ...proposal, changes: checked.changes, generatedAt: new Date().toISOString(), status: 'proposed' };
+        saveEvent(state, { type: 'patch-proposed', project: project.name, message: proposal.summary });
+        saveState(state);
+        res.json({ success: true, patch: incident.patch });
     } catch (err) {
-        console.error('Failed to write crash log:', err.message);
-        res.status(500).json({ error: 'Failed to simulate crash.' });
+        res.status(422).json({ error: err.message });
+    }
+});
+
+app.post('/api/v1/incidents/:id/apply-patch', requireAuth, async (req, res) => {
+    try {
+        const { state, incident, project } = findIncident(req.params.id);
+        if (!incident.patch || incident.patch.status !== 'proposed') {
+            return res.status(400).json({ error: 'Generate and review a patch before applying it.' });
+        }
+        if (incident.risk === 'high') {
+            return res.status(403).json({ error: 'High-risk changes cannot be applied automatically by A.C.R.E.' });
+        }
+        const result = await patchEngine.apply(project, incident.patch.changes);
+        incident.patch.status = result.validation.status === 'failed' ? 'applied-validation-failed' : 'applied';
+        incident.patch.appliedAt = new Date().toISOString();
+        incident.patch.backupRoot = result.backupRoot;
+        incident.status = 'patched';
+        saveEvent(state, { type: 'patch-applied', project: project.name, message: `Patch applied. Validation: ${result.validation.status}.` });
+        saveState(state);
+        res.json({ success: true, incident, result });
+    } catch (err) {
+        res.status(422).json({ error: err.message });
+    }
+});
+
+app.post('/api/v1/incidents/:id/rollback-patch', requireAuth, async (req, res) => {
+    try {
+        const { state, incident, project } = findIncident(req.params.id);
+        if (!incident.patch?.backupRoot || !String(incident.patch.status).startsWith('applied')) {
+            return res.status(400).json({ error: 'No applied patch is available to roll back.' });
+        }
+        const result = patchEngine.rollback(project, incident.patch.changes, incident.patch.backupRoot);
+        incident.patch.status = 'rolled-back';
+        incident.status = 'open';
+        saveEvent(state, { type: 'patch-rolled-back', project: project.name, message: 'Applied patch restored from local backup.' });
+        saveState(state);
+        res.json({ success: true, incident, result });
+    } catch (err) {
+        res.status(422).json({ error: err.message });
     }
 });
 
@@ -350,37 +276,85 @@ app.post('/api/simulate-crash', requireAuth, (req, res) => {
 // ────────────────────────────────────────────────────────────
 app.post('/api/resolve', requireAuth, async (req, res) => {
     try {
-        const config = readConfig();
-        fs.writeFileSync(LOG_FILE_PATH, '');
-        cache = { lastLog: null, proposedFix: null, verification: null, analyzing: false };
-        console.log(`✅ Incident resolved by user: ${req.user.email}`);
-
-        if (config.slackWebhook) {
+        const config = getConfig();
+        const incidentId = req.body?.id;
+        const state = getState();
+        const incident = incidentId ? state.incidents.find(item => item.id === incidentId) : null;
+        if (incident) {
+            incident.status = 'resolved';
+            incident.resolvedAt = new Date().toISOString();
+            saveEvent(state, {
+                type: 'incident-resolved',
+                project: incident.project,
+                message: `Incident ${incident.id} resolved by authenticated user.`
+            });
+            saveState(state);
+        }
+        const slackWebhook = config.settings?.notifications?.slack;
+        if (slackWebhook) {
             try {
-                await fetch(config.slackWebhook, {
+                await fetch(slackWebhook, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: `✅ *A.C.R.E. Incident Resolved!*\nThe crash has been mitigated and servers are healthy.` })
+                    body: JSON.stringify({ text: `✅ *A.C.R.E. Incident Resolved!*\nThe crash has been mitigated and marked resolved.` })
                 });
             } catch (e) {
                 console.error('Failed to dispatch webhook:', e.message);
             }
         }
-
-        res.json({ success: true, message: 'Incident resolved. Log cleared.' });
+        res.json({ success: true, message: 'Incident resolved.' });
     } catch (err) {
-        console.error('Failed to clear log:', err.message);
-        res.status(500).json({ success: false, error: 'Could not clear the error log.' });
+        console.error('Failed to resolve incident:', err.message);
+        res.status(500).json({ success: false, error: 'Could not resolve incident.' });
     }
 });
 
 // ────────────────────────────────────────────────────────────
+// OVERVIEW ROUTE WITH REAL TELEMETRY
+// ────────────────────────────────────────────────────────────
+app.get('/api/v1/overview', requireAuth, (req, res) => {
+    const config = getConfig();
+    const state = getState();
+    const projects = db.prepare('SELECT id, name, platform, logPath, projectRoot, framework, autoFix, createdAt FROM projects WHERE userId = ? ORDER BY createdAt DESC').all(req.user.id).map(project => ({ ...project, autoFix: Boolean(project.autoFix) }));
+    const projectIds = new Set(projects.map(project => project.id));
+    const settings = db.prepare('SELECT aiModel, autoFix FROM user_settings WHERE userId = ?').get(req.user.id) || { aiModel: '', autoFix: 0 };
+
+    res.json({
+        configured: config.configured,
+        projects,
+        settings: {
+            autoFix: Boolean(settings.autoFix),
+            aiModel: settings.aiModel
+        },
+        daemon: { pid: state.pid, startedAt: state.startedAt, uptimeSeconds: state.startedAt ? Math.floor((Date.now() - Date.parse(state.startedAt)) / 1000) : 0 },
+        incidents: state.incidents.filter(item => projectIds.has(item.projectId) && item.status !== 'resolved').slice(0, 50),
+        events: state.events.filter(item => !item.project || projects.some(project => project.name === item.project)).slice(0, 50),
+        system: {
+            hostname: os.hostname(),
+            platform: os.platform(),
+            cpuCount: os.cpus().length,
+            memory: { total: os.totalmem(), free: os.freemem() },
+            process: process.memoryUsage()
+        }
+    });
+});
+// ────────────────────────────────────────────────────────────
 // FRONTEND FALLBACK ROUTE (for React Router)
 // ────────────────────────────────────────────────────────────
+app.use('/api', (req, res) => {
+    res.status(404).json({ error: 'API endpoint not found.' });
+});
+
 app.use((req, res) => {
     res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
 });
 
-app.listen(PORT, '127.0.0.1', () => {
-    console.log(`📡 A.C.R.E. AI Control Server running privately on http://127.0.0.1:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`📡 A.C.R.E. AI Control Server running at http://localhost:${PORT}`);
+        const config = getConfig();
+        if (config.projects?.length) daemonHandle = startDaemon({ foreground: false });
+    });
+}
+
+module.exports = app;

@@ -14,12 +14,7 @@ function App() {
                 <Route path="/login"  element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
 
-                {/* Protected route with wildcard for nested dashboard routing */}
-                <Route path="/dashboard/*" element={
-                    <ProtectedRoute>
-                        <DashboardPage />
-                    </ProtectedRoute>
-                } />
+                <Route path="/dashboard/*" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
 
                 {/* Catch-all: any unknown URL → landing page */}
                 <Route path="*" element={<Navigate to="/" replace />} />

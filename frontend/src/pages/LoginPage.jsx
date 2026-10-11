@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -18,7 +18,7 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            const API = import.meta.env.VITE_API_URL || '';
             const res = await axios.post(`${API}/api/auth/login`, { email, password });
 
             localStorage.setItem('acre_token', res.data.token);
@@ -141,9 +141,6 @@ export default function LoginPage() {
                                 <label className="block text-[11px] uppercase tracking-widest font-medium text-black/50" htmlFor="password">
                                     Password
                                 </label>
-                                <Link to="/forgot-password" className="text-[11px] text-black/40 hover:text-black transition-colors">
-                                    Forgot password?
-                                </Link>
                             </div>
                             <input
                                 id="password"
